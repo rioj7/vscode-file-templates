@@ -1,0 +1,9 @@
+author = ${author}
+date = ${date}
+dateTimeFormat = ${dateTimeFormat}
+fileBasename = ${fileBasename}
+fileBasenameNoExtension = ${fileBasenameNoExtension}
+fileExtname = ${fileExtname}
+relativeFile = ${relativeFile}
+relativeFileDirname = ${relativeFileDirname}
+file = ${file}

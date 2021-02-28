@@ -1,0 +1,161 @@
+{
+  "name": "vscode-file-templates",
+  "displayName": "File Templates",
+  "description": "Create files based on templates.",
+  "publisher": "rioj7",
+  "license": "MIT",
+  "version": "1.0.0",
+  "engines": {"vscode": "^1.50.0"},
+  "categories": ["Other"],
+  "keywords": [ "templates", "template", "file", "snippets", "multi-root ready" ],
+  "icon": "images/icon.png",
+  "galleryBanner": {"color": "#000080", "theme": "dark"},
+  "activationEvents": [
+    "onCommand:templates.newTemplateFromFile",
+    "onCommand:templates.newFileFromTemplate",
+    "onCommand:templates.editTemplate",
+    "onCommand:templates.newTemplate",
+    "onCommand:templates.nextSnippet"
+  ],
+  "main": "./vscode-file-templates.js",
+  "contributes": {
+    "configuration": {
+      "title": "Templates",
+      "properties": {
+        "templates.Author": {
+          "type": "string",
+          "default": "Author",
+          "description": "Author of the file",
+          "scope": "resource",
+          "markdownDeprecationMessage": "**Deprecated**: Please use `#templates.author#` instead.",
+          "deprecationMessage": "Deprecated: Please use templates.author instead."
+        },
+        "templates.author": {
+          "type": "string",
+          "default": "Author",
+          "description": "Author of the file",
+          "scope": "resource"
+        },
+        "templates.folder": {
+          "type": "string",
+          "description": "File path of folder with templates. For \"User\" and \"Multi Root Workspace\" (.code-workspace) settings. Not used for \"Folder\" (.vscode/settings.json) settings (.vscode/templates)",
+          "scope": "window"
+        },
+        "templates.dateTimeFormat": {
+          "type": "object",
+          "default": {},
+          "description": "Properties to format a DateTime string for variable ${dateTimeFormat}",
+          "scope": "resource",
+          "properties": {
+            "locale": {
+              "type": ["string", "array"],
+              "items": { "type": "string" }
+            },
+            "template": { "type": "string" },
+            "options": {
+              "type": "object",
+              "description": "All properties are optional",
+              "properties": {
+                "dateStyle": { "type": "string", "enum": ["full", "long", "medium", "short"] },
+                "timeStyle": { "type": "string", "enum": ["full", "long", "medium", "short"] },
+                "dayPeriod": { "type": "string", "enum": ["narrow", "short", "long"] },
+                "localeMatcher": { "type": "string", "enum": ["lookup", "best fit"] },
+                "timeZone": { "type": "string" },
+                "hour12": { "type": "boolean" },
+                "hourCycle": { "type": "string", "enum": ["h11", "h12", "h23", "h24"] },
+                "formatMatcher": { "type": "string", "enum": ["basic", "best fit"] },
+                "weekday": { "type": "string", "enum": ["long", "short", "narrow"] },
+                "era": { "type": "string", "enum": ["long", "short", "narrow"] },
+                "year": { "type": "string", "enum": ["numeric", "2-digit"] },
+                "month": { "type": "string", "enum": ["numeric", "2-digit", "long", "short", "narrow"] },
+                "day": { "type": "string", "enum": ["numeric", "2-digit"] },
+                "hour": { "type": "string", "enum": ["numeric", "2-digit"] },
+                "minute": { "type": "string", "enum": ["numeric", "2-digit"] },
+                "second": { "type": "string", "enum": ["numeric", "2-digit"] },
+                "fractionalSecondDigits": { "type": "number", "enum": [0, 1, 2, 3] },
+                "timeZoneName": { "type": "string", "enum": ["long", "short"] },
+                "calendar": {
+                  "type": "string",
+                  "enum": ["buddhist", "chinese", "coptic", "ethiopia", "ethiopic", "gregory", "hebrew", "indian", "islamic", "iso8601", "japanese", "persian", "roc"]
+                },
+                "numberingSystem": {
+                  "type": "string",
+                  "enum": ["arab", "arabext", "bali", "beng", "deva", "fullwide", "gujr", "guru", "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec", "telu", "thai", "tibt"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "templates.newTemplate",
+        "title": "New File Template",
+        "category": "Files"
+      },
+      {
+        "command": "templates.newTemplateFromFile",
+        "title": "New Template from File",
+        "category": "Files"
+      },
+      {
+        "command": "templates.newFileFromTemplate",
+        "title": "New File from Template",
+        "category": "Files"
+      },
+      {
+        "command": "templates.editTemplate",
+        "title": "Edit File Template",
+        "category": "Files"
+      },
+      {
+        "command": "templates.nextSnippet",
+        "title": "Next Snippet in File",
+        "category": "Files"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "templates.newTemplateFromFile",
+          "group": "templates"
+        },
+        {
+          "command": "templates.newFileFromTemplate",
+          "group": "templates"
+        },
+        {
+          "command": "templates.nextSnippet",
+          "group": "templates"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "templates.newFileFromTemplate",
+          "group": "templates"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "templates.newFileFromTemplate",
+        "key": "ctrl+n",
+        "mac": "cmd+n"
+      },
+      {
+        "command": "workbench.action.files.newUntitledFile",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      }
+    ]
+  },
+  "homepage": "https://github.com/rioj7/vscode-file-templates",
+  "bugs": {
+    "url": "https://github.com/rioj7/vscode-file-templates/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rioj7/vscode-file-templates.git"
+  }
+}
