@@ -89,10 +89,11 @@ const cursorVar = '${cursor}';
 //   return this.replace(new RegExp(search, 'g'), replacement);
 // };
 
-const dateTimeFormat = (args) => {
-  let locale = getProperty(args, 'locale', undefined);
-  let options = getProperty(args, 'options', undefined);
-  let template = getProperty(args, 'template', undefined);
+const dateTimeFormat = (args, parentArgs) => {
+  let getPropertyEx = (obj, prop, parentObj) => getProperty(obj, prop, getProperty(parentObj, prop, undefined));
+  let locale = getPropertyEx(args, 'locale', parentArgs);
+  let options = getPropertyEx(args, 'options', parentArgs);
+  let template = getPropertyEx(args, 'template', parentArgs);
   let parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
   if (!template) { return parts.map(({type, value}) => value).join(''); }
   let dateTimeFormatParts = {};
@@ -106,7 +107,7 @@ function getAuthor(config) {
   return config.get('author');
 }
 
-function getVariableWithParamsRegex(varName) { return new RegExp(`\\$\\{${varName}(\\}|([^a-zA-Z{}$]+)(.+?)\\2\\})`); }
+function getVariableWithParamsRegex(varName, flags) { return new RegExp(`\\$\\{${varName}(\\}|([^a-zA-Z{}$]+)(.+?)\\2\\})`, flags); }
 
 async function gotoCursor(editor, offsetCursor = -1) {
   let document = editor.document;
@@ -149,7 +150,10 @@ function createFile(filepath, data = '', fileExtname = '') {
       let config = vscode.workspace.getConfiguration('templates', newFileURI);
       data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
       data = data.replace(/\$\{date\}/ig, new Date().toDateString());
-      data = data.replace(/\$\{dateTimeFormat\}/g, dateTimeFormat(config.get('dateTimeFormat')));
+      data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (m, p1, p2, p3) => {
+        let dateConfig = config.get('dateTimeFormat');
+        return dateTimeFormat(p3 ? getProperty(dateConfig, p3, {}) : dateConfig, p3 ? dateConfig : {});
+      });
       data = data.replace(/\$\{fileBasename\}/g, fileBasename);
       data = data.replace(/\$\{fileBasenameNoExtension\}/g, fileBasenameNoExtension);
       data = data.replace(/\$\{fileExtname\}/g, fileExtname);

@@ -75,7 +75,6 @@ A number of variables is identical to the [variables that can be used in `tasks.
 The next use settings:
 
 * `${author}` : use the value for setting `templates.author`
-* `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
 * `${date}` : show the current date and time in a fixed format, for historic reasons this variable is still allowed.
 
 The next variables need additional information. This is part of the variable and needs to be specified using separator strings.
@@ -84,9 +83,14 @@ The next variables need additional information. This is part of the variable and
 
 All _`separator`_'s used in a variable need to be the same.
 
-The _`separator`_ is a string of 1 or more characters that are not part of the a to z alfabet, `$` or `{}`, in regular expression `[^a-zA-Z{}$]+`. Choose a character string that is not used in the  _`properties`_ part. If you need to use more than 1 character be carefull if you use the same character, if you experience unwanted behavior. The reason is that JavaScript regular expression does not have non-backtrack greedy quantifiers. Currently the variable is matched with 1 regular expression. This makes everything easy to implement.
+The _`separator`_ is a string of 1 or more characters that are not part of the a to z alfabet, `$` or `{}`, in regular expression `[^a-zA-Z{}$]+`. Choose a character string that is not used in the  _`properties`_ part. If you need to use more than 1 character be carefull if you use the same character, you can experience unwanted behavior. The reason is that JavaScript regular expression does not have non-backtrack greedy quantifier. Currently the variable is matched with 1 regular expression. This makes everything easy to implement.
 
-* `${input:description:}` : Ask the user some test and use the _`properties`_ part as the description for the InputBox<br/>
+In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
+
+* `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
+* `${dateTimeFormat:name:}` : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
+
+* `${input:description:}` : Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>
   Example: `${input:Title of this page:}`
 * `${snippet:definition:}` : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
@@ -99,9 +103,9 @@ A final empty variable to place the cursor:
 
 ## Variable dateTimeFormat
 
-This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`.
+This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`. It can use the unnamed format properties or you can use <em>name</em>d format properties: <code>${dateTimeFormat:<em>name</em>:}</code> (example uses separator `:`)
 
-The setting `templates.dateTimeFormat` is an object with properties that are use to call [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) to create a language-sensitive format of the current date and time.
+The setting `templates.dateTimeFormat` is an object with properties that are used to call [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) to create a language-sensitive format of the current date and time.
 
 The `locale` and `options` properties are the arguments for the [`Intl.DateTimeFormat` constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat/DateTimeFormat) and are optional.
 
@@ -112,6 +116,10 @@ The `template` property is an optional template string that uses the same placeh
 The only expressions valid are the `type` values returned by the [`Intl.DateTimeFormat.prototype.formatToParts()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat/formatToParts) method. See first example.
 
 If there is no `template` property the value parts of the `Intl.DateTimeFormat.prototype.formatToParts()` are joined. See second example.
+
+### Named DateTime Formats
+
+Any other property of `templates.dateTimeFormat` is a <em>name</em>d DateTimeFormat object that can define the properties `locale`, `options` and `template`. These properties override the values defined in `templates.dateTimeFormat`. See Example 3.
 
 ### Example 1
 
@@ -157,6 +165,34 @@ The result is
 jeudi १९ mars २०२० à १७:५९:५७ heure normale d’Europe centrale
 ```
 
+### Example 3 Named DateTime Formats
+
+```json
+    "templates.dateTimeFormat": {
+      "locale": "en-US",
+      "options": {
+        "year": "numeric",
+        "month": "2-digit",
+        "day": "2-digit",
+        "hour12": false,
+        "hour": "2-digit",
+        "minute": "2-digit",
+        "second": "2-digit"
+      },
+      "template": "${year}/${month}/${day}-${hour}:${minute}:${second}",
+      "year-only": { "template": "${year}" },
+      "timeHMS": { "template": "${hour}:${minute}:${second}" }
+    }
+```
+
+In the template use these variables (example uses `:` as separator):
+
+```
+${dateTimeFormat}
+${dateTimeFormat:year-only:}
+${dateTimeFormat:timeHMS:}
+```
+
 ## Extension Settings
 
 This extension has the following settings:
@@ -183,6 +219,8 @@ This extension has the following settings:
 * support multiple `${cursor}` variables. To get a Multi Cursor after creating a file from a template
 
 ## Release Notes
+
+### 1.1.0 named dateTimeFormats
 
 ### 1.0.0
 

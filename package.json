@@ -4,7 +4,7 @@
   "description": "Create files based on templates.",
   "publisher": "rioj7",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {"vscode": "^1.50.0"},
   "categories": ["Other"],
   "keywords": [ "templates", "template", "file", "snippets", "multi-root ready" ],
@@ -81,6 +81,50 @@
                 "numberingSystem": {
                   "type": "string",
                   "enum": ["arab", "arabext", "bali", "beng", "deva", "fullwide", "gujr", "guru", "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec", "telu", "thai", "tibt"]
+                }
+              }
+            }
+          },
+          "patternProperties": {
+            "^(?!(locale|template|options)$).+$": {
+              "type": "object",
+              "properties": {
+                "locale": {
+                  "type": ["string", "array"],
+                  "items": { "type": "string" }
+                },
+                "template": { "type": "string" },
+                "options": {
+                  "type": "object",
+                  "description": "All properties are optional",
+                  "properties": {
+                    "dateStyle": { "type": "string", "enum": ["full", "long", "medium", "short"] },
+                    "timeStyle": { "type": "string", "enum": ["full", "long", "medium", "short"] },
+                    "dayPeriod": { "type": "string", "enum": ["narrow", "short", "long"] },
+                    "localeMatcher": { "type": "string", "enum": ["lookup", "best fit"] },
+                    "timeZone": { "type": "string" },
+                    "hour12": { "type": "boolean" },
+                    "hourCycle": { "type": "string", "enum": ["h11", "h12", "h23", "h24"] },
+                    "formatMatcher": { "type": "string", "enum": ["basic", "best fit"] },
+                    "weekday": { "type": "string", "enum": ["long", "short", "narrow"] },
+                    "era": { "type": "string", "enum": ["long", "short", "narrow"] },
+                    "year": { "type": "string", "enum": ["numeric", "2-digit"] },
+                    "month": { "type": "string", "enum": ["numeric", "2-digit", "long", "short", "narrow"] },
+                    "day": { "type": "string", "enum": ["numeric", "2-digit"] },
+                    "hour": { "type": "string", "enum": ["numeric", "2-digit"] },
+                    "minute": { "type": "string", "enum": ["numeric", "2-digit"] },
+                    "second": { "type": "string", "enum": ["numeric", "2-digit"] },
+                    "fractionalSecondDigits": { "type": "number", "enum": [0, 1, 2, 3] },
+                    "timeZoneName": { "type": "string", "enum": ["long", "short"] },
+                    "calendar": {
+                      "type": "string",
+                      "enum": ["buddhist", "chinese", "coptic", "ethiopia", "ethiopic", "gregory", "hebrew", "indian", "islamic", "iso8601", "japanese", "persian", "roc"]
+                    },
+                    "numberingSystem": {
+                      "type": "string",
+                      "enum": ["arab", "arabext", "bali", "beng", "deva", "fullwide", "gujr", "guru", "hanidec", "khmr", "knda", "laoo", "latn", "limb", "mlym", "mong", "mymr", "orya", "tamldec", "telu", "thai", "tibt"]
+                    }
+                  }
                 }
               }
             }
