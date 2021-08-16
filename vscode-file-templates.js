@@ -34,6 +34,7 @@ function withTemplateDirs(action) {
   action(templateDirs);
 }
 
+/** @returns {Promise<{label: string, description?: string, filePath?: string}[]>} */
 function getTemplates(templateDirs, override = false) {
   return new Promise( (resolve) => {
     let templates = [];
@@ -128,7 +129,10 @@ function createFile(filepath, data = '', fileExtname = '') {
   vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') })
     .then(fileBasenameNoExtension => {
       if (!fileBasenameNoExtension) { return; }
-      let fileBasename = fileBasenameNoExtension + fileExtname;
+      let fileBasename = fileBasenameNoExtension;
+      if ( (fileExtname.length !== 0) && !fileBasenameNoExtension.endsWith(fileExtname)) {
+        fileBasename += fileExtname;
+      }
       let curDir = filepath;
       if (!pathIsDirectory(filepath))
         curDir = path.dirname(filepath);
@@ -306,7 +310,7 @@ function createTemplate(templateText = '') {
               let templatePath = path.join(templateDirPath, templateName);
               fs.writeFile(templatePath, templateText, (err) => {
                 if (err) {
-                  vscode.window.showErrorMessage(err);
+                  vscode.window.showErrorMessage(err.toString());
                   return;
                 }
                 vscode.window.showInformationMessage(`${removeThemeIcon(folder.label)}: ${templateName} created.`);
