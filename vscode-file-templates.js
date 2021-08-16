@@ -126,9 +126,11 @@ async function gotoCursor(editor, offsetCursor = -1) {
 
 function createFile(filepath, data = '', fileExtname = '') {
   vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') })
-    .then(fileBasenameNoExtension => {
-      if (!fileBasenameNoExtension) { return; }
-      let fileBasename = fileBasenameNoExtension + fileExtname;
+    .then(fileBasename => {
+      if (!fileBasename) { return; }
+      if (fileBasename.split('.').pop() !== fileExtname){
+        let fileBasename = fileBasename + fileExtname;
+      }
       let curDir = filepath;
       if (!pathIsDirectory(filepath))
         curDir = path.dirname(filepath);
