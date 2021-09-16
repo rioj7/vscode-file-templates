@@ -1,3 +1,8 @@
+The extension supports:
+
+* [Create files from defined templates](#file-templates)
+* [Save As current file N times](#save-as-n-times)
+
 # File Templates
 
 Create files from defined templates. Templates can be defined at different levels: Extension, User, Workspace and Folder.
@@ -214,11 +219,68 @@ This extension has the following settings:
     * Windows:  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
     * MAC: <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
 
+# Save As N Times
+
+If you need a series of files with filenames that have a sequence numbering and start all with the same content you can use the command "**Files: Save As N Times**" (`templates.fileSaveAsNTimes`). This command can also be found in the context menu of the editor.
+
+The command asks to enter a file name template with fields. A field is a series of properties enclosed by `{{ }}`. The properties are comma separated _`key=value`_ pairs. The type of the field is determined by the property _`type`_. Based on the current file name a suggestion is shown in the input box with 1 field added just before the file extension.
+
+A file name template can have 1 or multiple fields. If no field is found a message is shown and no new file is created.
+
+At the moment only a numeric field (`type=N`) is possible.
+
+If a property has a numeric value this can be entered with prefix `0b` and `0x` for respective base 2 and 16.
+
+The other properties are:
+
+* Numeric field (`type=N`)
+
+    * <code>from=<em>number</em></code> : the starting number of this field (default: 1)
+    * <code>to=<em>number</em></code> : the last number of this field (default: 5)
+    * <code>size=<em>number</em></code> : if `size` is defined, the number is padded with `0`'s on the left to get a string of the given size (default: undefined)
+    * <code>base=<em>number</em></code> : the base of the number of this field, allows you to generate numbers with base, 2, 8, 16. Possible values [2, 36] (default: 10)
+
+    If `from >= to` no files will be created.
+
+    Using negative values for `from` and `to` give unexpected results, the `-` sign is not the start character of the resulting string of the field.
+
+The file copies are saved in the same folder as the current file. No file will be overwritten. If the files need to be replaced you have to delete them first.
+
+## Example with multiple fields
+
+The following file name template:
+
+```
+page-{{type=N,size=2,from=1,to=3}}-{{type=N,size=3,from=1,to=5}}.html
+```
+
+generates the following files:
+
+```
+page-01-001.html
+page-01-002.html
+page-01-003.html
+page-01-004.html
+page-01-005.html
+page-02-001.html
+page-02-002.html
+page-02-003.html
+page-02-004.html
+page-02-005.html
+page-03-001.html
+page-03-002.html
+page-03-003.html
+page-03-004.html
+page-03-005.html
+```
+
 ## TODO
 
 * support multiple `${cursor}` variables. To get a Multi Cursor after creating a file from a template
 
 ## Release Notes
+
+### 1.2.0 Save As N Times
 
 ### 1.1.0 named dateTimeFormats
 

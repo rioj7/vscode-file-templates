@@ -22,7 +22,8 @@ function withTemplateDirs(action) {
     return;
   }
   let config = vscode.workspace.getConfiguration('templates', vscode.workspace.workspaceFolders[0].uri);
-  let inspect = config.inspect('folder') || {};
+  let inspect = config.inspect('folder');
+  if (inspect === undefined) { inspect = {key:undefined}; }
   let templateDirs = {};
   if (inspect.globalValue) {
     templateDirs.global = { label: '  $(home) User', uri: vscode.Uri.file(inspect.globalValue) }
@@ -331,12 +332,136 @@ function newTemplate() {
   createTemplate();
 }
 
+/** @returns {[any,any][]} */
+const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+const flattened = arr => [].concat(...arr);
+
+class SaveAsIterateProperties {
+  constructor() {
+    this.fileNameParts = [];
+    this.fieldTemplates = [];
+    this.fieldResults = [];
+  }
+}
+
+class BaseFieldTemplate {
+  constructor(level) {
+    this.level = level;
+  }
+  async iterate(saveAsProperties) {
+    saveAsProperties.fieldResults.push(''); // now index this.level is filled
+    await this._iterate(saveAsProperties);
+    saveAsProperties.fieldResults.pop();
+  }
+  async _iterate(saveAsProperties) {
+    throw new Error('Function not implemented.');
+  }
+  /** @param {SaveAsIterateProperties} saveAsProperties */
+  async nextLevel(str, saveAsProperties) {
+    saveAsProperties.fieldResults[this.level] = str;
+    await saveAsProperties.fieldTemplates[this.level + 1].iterate(saveAsProperties);
+  }
+}
+
+function toNumber(obj, deflt=undefined) {
+  let value = Number(obj);
+  return Number.isNaN(value) ? deflt : value;
+}
+
+class NumericFieldTemplate extends BaseFieldTemplate {
+  constructor(level, properties) {
+    super(level);
+    this.from = toNumber(properties.from, 1);
+    this.to = toNumber(properties.to, 5);
+    this.size = toNumber(properties.size);
+    this.base = toNumber(properties.base, 10);
+  }
+  /** @param {SaveAsIterateProperties} saveAsProperties */
+  async _iterate(saveAsProperties) {
+    for (let n = this.from; n <= this.to; ++n) {
+      let str = n.toString(this.base);
+      if (this.size) { str = str.padStart(this.size, '0'); }
+      await this.nextLevel(str, saveAsProperties);
+    }
+  }
+}
+
+class SaveTemplate extends BaseFieldTemplate {
+  constructor(level, srcFilePath) {
+    super(level);
+    this.srcFilePath = srcFilePath;
+  }
+  /** @param {SaveAsIterateProperties} saveAsProperties */
+  async _iterate(saveAsProperties) {
+    // both arrays are now same length, last fieldResults === ''
+    let destFilePath = flattened(zip(saveAsProperties.fileNameParts, saveAsProperties.fieldResults)).join('');
+    if (destFilePath === this.srcFilePath) { return; }
+    // console.log(`Copy file to: ${destFilePath}`);
+    await vscode.workspace.fs.copy(vscode.Uri.file(this.srcFilePath), vscode.Uri.file(destFilePath), {overwrite:false});
+  }
+}
+
+/** @param {number} level @param {string} templateDesc @returns {BaseFieldTemplate} */
+function constructFieldTemplate(level, templateDesc) {
+  let properties = {type:'N', from:1, to:5};
+  for (const prop of templateDesc.trim().split(/\s*(?:,|$)\s*/)) {
+    let parts = prop.split(/\s*=\s*/);
+    if (parts.length !== 2) { continue; }
+    properties[parts[0]] = parts[1];
+  }
+  return new NumericFieldTemplate(level, properties);
+}
+
+/** @param {vscode.TextEditor} editor */
+async function fileSaveAsNTimes(editor, edit, args) {
+  if (editor.document.isDirty) {
+    vscode.window.showErrorMessage('File is not saved.');
+    return;
+  }
+  let fileName = editor.document.uri.path;
+  let lastSep = fileName.lastIndexOf('/');
+  if (lastSep === -1) { return; }
+  fileName = fileName.substring(lastSep+1);
+  let fileDir = editor.document.uri.fsPath;
+  fileDir = fileDir.substring(0, fileDir.lastIndexOf(fileName));
+  let lastDot = fileName.lastIndexOf('.');
+  if (lastDot === -1) { lastDot = fileName.length; }
+  let template = '{{type=N,size=4,from=1,to=10,base=10}}';
+  let fileNameWithTemplates = `${fileName.substring(0,lastDot)}${template}${fileName.substring(lastDot)}`;
+  fileNameWithTemplates = await vscode.window.showInputBox({prompt:`Enter file name with field template(s). ${template}`, value:fileNameWithTemplates, ignoreFocusOut:true});
+  if (fileNameWithTemplates === undefined) { return; }
+
+  let fieldTemplates = [];
+  let fileNameParts = [];
+  let lastIndex = 0;
+  const fieldRE = new RegExp('\{\{([^}]+)\}\}', 'g');
+  let result;
+  while ((result = fieldRE.exec(fileNameWithTemplates)) !== null) {
+    fileNameParts.push(fileNameWithTemplates.substring(lastIndex, result.index));
+    lastIndex = fieldRE.lastIndex;
+    fieldTemplates.push(constructFieldTemplate(fieldTemplates.length, result[1]));
+  }
+  fileNameParts.push(fileNameWithTemplates.substring(lastIndex));
+  fieldTemplates.push(new SaveTemplate(fieldTemplates.length, editor.document.uri.fsPath));
+
+  fileNameParts[0] = fileDir + fileNameParts[0];
+  if (fieldTemplates.length === 0) {
+    vscode.window.showInformationMessage('No field specified.');
+    return;
+  }
+  let saveAsProperties = new SaveAsIterateProperties();
+  saveAsProperties.fileNameParts = fileNameParts;
+  saveAsProperties.fieldTemplates = fieldTemplates;
+  await fieldTemplates[0].iterate(saveAsProperties);
+}
+
 function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand('templates.newTemplateFromFile', newTemplateFromFile));
   context.subscriptions.push(vscode.commands.registerCommand('templates.newTemplate', newTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.editTemplate', editTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.newFileFromTemplate', newFileFromTemplate));
   context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.nextSnippet', nextSnippet));
+  context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.fileSaveAsNTimes', fileSaveAsNTimes));
 }
 
 function deactivate() { }

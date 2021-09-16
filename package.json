@@ -4,10 +4,10 @@
   "description": "Create files based on templates.",
   "publisher": "rioj7",
   "license": "MIT",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "engines": {"vscode": "^1.50.0"},
   "categories": ["Other"],
-  "keywords": [ "templates", "template", "file", "snippets", "multi-root ready" ],
+  "keywords": [ "templates", "template", "file", "snippets", "multi-root ready", "saveas" ],
   "icon": "images/icon.png",
   "galleryBanner": {"color": "#000080", "theme": "dark"},
   "activationEvents": [
@@ -15,7 +15,8 @@
     "onCommand:templates.newFileFromTemplate",
     "onCommand:templates.editTemplate",
     "onCommand:templates.newTemplate",
-    "onCommand:templates.nextSnippet"
+    "onCommand:templates.nextSnippet",
+    "onCommand:templates.fileSaveAsNTimes"
   ],
   "main": "./vscode-file-templates.js",
   "contributes": {
@@ -157,6 +158,11 @@
         "command": "templates.nextSnippet",
         "title": "Next Snippet in File",
         "category": "Files"
+      },
+      {
+        "command": "templates.fileSaveAsNTimes",
+        "title": "Save As N Times",
+        "category": "Files"
       }
     ],
     "menus": {
@@ -171,6 +177,10 @@
         },
         {
           "command": "templates.nextSnippet",
+          "group": "templates"
+        },
+        {
+          "command": "templates.fileSaveAsNTimes",
           "group": "templates"
         }
       ],
