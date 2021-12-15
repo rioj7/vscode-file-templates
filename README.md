@@ -98,10 +98,9 @@ In the description the `:` is used as the separator, choose a different one if y
 * <code>${input:<em>description</em>:name=<em>name</em>:find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em>:}</code> : Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used. The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively. If the _description_ starts with `name=` that `${input}` variable is considered a named input variable.
 * <code>${snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
+* <code>${snippet:<em>definition</em>:noUI:}</code> : Adding the property `noUI` should only be added to `${snippet}` variables that do not need User Interaction (variable transforms). These snippets are resolved at file creation.
 
 For template instantiation the `${input}` variables are processed at file creation. If you have some file with `${input}` variables they are also processed with the **Next Snippet in File** command. This can happen if you escape an `${input}` variable. This way you can later process them.
-
-If a snippet does not need user interaction (variable transforms) it could be done at file creation but determining this automatic might be a ToDo item.
 
 A final empty variable to place the cursor:
 
@@ -281,6 +280,8 @@ page-03-005.html
 * support multiple `${cursor}` variables. To get a Multi Cursor after creating a file from a template
 
 ## Release Notes
+
+### 1.4.0 `noUI` property of `${snippet}` variable
 
 ### 1.3.0
 * named input variable `${input:Enter the title:name=title:}`, reuse entered text in input variables with same name

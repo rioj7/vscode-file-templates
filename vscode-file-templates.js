@@ -128,34 +128,68 @@ async function gotoCursor(editor, offsetCursor = -1) {
   }
 }
 
-class InputVariableProperties {
+class VariableProperties {
   constructor(regexMatch) {
     this.regexMatch = regexMatch;
-    this.description = 'Enter text';
     this.name = undefined;
     this.find = '(.*)';
     this.replace = '$1';
     this.flags = undefined;
-    if (regexMatch[2] !== undefined) {
-      let properties = regexMatch[3].split(regexMatch[2]);
-      let propIndex = 1; // skip description
-      if (properties[0].startsWith('name=')) {
-        propIndex = 0;
-      } else {
-        this.description = properties[0];
-      }
-      for (; propIndex < properties.length; propIndex++) {
-        const [key,value] = properties[propIndex].split('=');
-        if (key === 'name') { this.name = value; continue; }
-        if (key === 'find') { this.find = value; continue; }
-        if (key === 'flags') { this.flags = value; continue; }
-        if (key === 'replace') { this.replace = value; continue; }
-      }
+  }
+  init() {
+    if (this.regexMatch[2] === undefined) { return; }
+    let properties = this.regexMatch[3].split(this.regexMatch[2]);
+    let propIndex = this.getPropIndex(properties);
+    for (; propIndex < properties.length; propIndex++) {
+      const [key,value] = properties[propIndex].split('=');
+      if (key === 'name') { this.name = value; continue; }
+      if (key === 'find') { this.find = value; continue; }
+      if (key === 'flags') { this.flags = value; continue; }
+      if (key === 'replace') { this.replace = value; continue; }
+      this.setProperty(key, value);
     }
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) { throw 'Not Implemented'; }
+  setProperty(key, value) {}
+}
+class InputVariableProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.description = 'Enter text';
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) {
+    let propIndex = 1; // skip description
+    if (properties[0].startsWith('name=')) {
+      propIndex = 0;
+    } else {
+      this.description = properties[0];
+    }
+    return propIndex;
   }
   /** @param {string} input */
   transform(input) {
     return input.replace(new RegExp(this.find, this.flags), this.replace);
+  }
+}
+
+class SnippetVariableProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.snippet = '';
+    this.hasUI = true;
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) {
+    let propIndex = 1; // skip description
+    this.snippet = properties[0];
+    return propIndex;
+  }
+  setProperty(key, value) {
+    if (key === 'noUI') { this.hasUI = false; return; }
   }
 }
 
@@ -183,6 +217,23 @@ async function processInputVariable(editor, regexMatch) {
       editBuilder.replace(varRange, e.transform(input));
     });
   });
+}
+
+/** @param {vscode.TextEditor} editor */
+async function handleSnippetNoUI(editor) {
+  let document = editor.document;
+  let documentText = document.getText();
+  let snippetVarRegEx = getVariableWithParamsRegex('snippet', 'g');
+  let result;
+  while ((result = snippetVarRegEx.exec(documentText)) !== null) {
+    let snippetVar = new SnippetVariableProperties(result);
+    if (snippetVar.hasUI) { continue; }
+    let start = document.positionAt(snippetVar.regexMatch.index);
+    let varRange = new vscode.Range(start, start.translate(0, snippetVar.regexMatch[0].length));
+    await editor.insertSnippet(new vscode.SnippetString(snippetVar.snippet), varRange);
+    return true;
+  }
+  return false;
 }
 
 function createFile(filepath, data = '', fileExtname = '') {
@@ -245,11 +296,18 @@ function createFile(filepath, data = '', fileExtname = '') {
             let document = editor.document;
             if (lowerCaseDriveLetter(document.uri.path) !== lowerCaseDriveLetter(newFileURI.path)) { return; }
 
+            let foundSnippetNoUI = false;
+            while (await handleSnippetNoUI(editor)) {
+              await vscode.commands.executeCommand('workbench.action.files.save');
+              foundSnippetNoUI = true;
+            }
+
             let inputVarRegEx = getVariableWithParamsRegex('input');
             let foundInputVar = false;
             while (true) {
               let found = document.getText().match(inputVarRegEx);
               if (!found) { break; }
+              foundSnippetNoUI = false;
               if(! await processInputVariable(editor, found)) { break; }
               if (saveAfterInputVariable) {
                 await vscode.commands.executeCommand('workbench.action.files.save');
@@ -258,7 +316,7 @@ function createFile(filepath, data = '', fileExtname = '') {
             }
             if (getVariableWithParamsRegex('snippet').test(document.getText())) { return; }
             await gotoCursor(editor, offsetCursor);
-            if (foundInputVar) {
+            if (foundSnippetNoUI || foundInputVar) {
               await vscode.commands.executeCommand('workbench.action.files.save');
             }
         });
