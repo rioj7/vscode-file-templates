@@ -207,6 +207,7 @@ This extension has the following settings:
 * `templates.Author` : Set the Author name. **Deprecated**: Please use `templates.author` instead.
 * `templates.folder` : Define a File system path for a directory to save the templates at this level. Can only be defined at User and Multiroot Workspace level.
 * `templates.dateTimeFormat` : An object describing the properties used by the [`${dateTimeFormat}` variable](#variable-datetimeformat)
+* `templates.saveAfterInputVariableOnFileCreation` : Save the file after processing ${input} variables when the file is created.
 
 ## KeyBindings
 
@@ -284,6 +285,7 @@ page-03-005.html
 ### 1.3.0
 * named input variable `${input:Enter the title:name=title:}`, reuse entered text in input variables with same name
 * find/replace text from input variable
+* setting: `templates.saveAfterInputVariableOnFileCreation`
 
 ### 1.2.0 Save As N Times
 

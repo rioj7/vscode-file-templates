@@ -130,6 +130,11 @@
               }
             }
           }
+        },
+        "templates.saveAfterInputVariableOnFileCreation": {
+          "type": "boolean",
+          "description": "Save the file after processing ${input} variables when the file is created.",
+          "default": false
         }
       }
     },

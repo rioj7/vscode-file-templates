@@ -230,6 +230,7 @@ function createFile(filepath, data = '', fileExtname = '') {
         data = data.replace(/\$\{cursor\}/g, '');
       }
 
+      let saveAfterInputVariable = config.get('saveAfterInputVariableOnFileCreation');
       fs.writeFile(newFilePath, data, (err) => {
         if (err) {
           vscode.window.showErrorMessage(`Cannot create new file: ${newFilePath}`);
@@ -243,14 +244,22 @@ function createFile(filepath, data = '', fileExtname = '') {
             if (lowerCaseDriveLetter(document.uri.path) !== lowerCaseDriveLetter(newFileURI.path)) { return; }
 
             let inputVarRegEx = getVariableWithParamsRegex('input');
+            let foundInputVar = false;
             while (true) {
               let found = document.getText().match(inputVarRegEx);
               if (!found) { break; }
               if(! await processInputVariable(editor, found)) { break; }
+              if (saveAfterInputVariable) {
+                await vscode.commands.executeCommand('workbench.action.files.save');
+                foundInputVar = true;
+              }
             }
             if (getVariableWithParamsRegex('snippet').test(document.getText())) { return; }
-            gotoCursor(editor, offsetCursor);
-          });
+            await gotoCursor(editor, offsetCursor);
+            if (foundInputVar) {
+              await vscode.commands.executeCommand('workbench.action.files.save');
+            }
+        });
       });
     });
 }
