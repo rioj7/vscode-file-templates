@@ -123,6 +123,8 @@ async function gotoCursor(editor, offsetCursor = -1) {
   if (offsetCursor >= 0) {
     let start = document.positionAt(offsetCursor);
     editor.selections = [ new vscode.Selection(start,start) ];
+    var range = new vscode.Range(editor.selection.start, editor.selection.start);
+    editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
   }
 }
 

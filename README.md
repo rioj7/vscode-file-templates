@@ -37,7 +37,7 @@ It fixes a number of problems and adds a few features.
       ![Select Folder for New Template](images/select-folder-new-template.png)<br/>
       _Theme: Light+_
 
-    * **Next Snippet in File** : the [`${snippet}` variables](#template-variables) needs to be evaluated after creation of the file because the editor needs to be put in _Snippet_ mode. This also resolves the `${cursor}` variable as a final snippet.<br/>If there are no `${snippet}` or `${cursor}` variables nothing happens.
+    * **Next Snippet in File** : the [`${snippet}` variables](#template-variables) needs to be evaluated after creation of the file because the editor needs to be put in _Snippet_ mode. This also resolves the `${cursor}` variable as a final snippet.<br/>If there are no `${snippet}` or `${cursor}` variables nothing happens.<br/>Any `${input}` variables still in the file are also processed.
 * From the Command Palette you can select:
     * **Files: New File from Template** (`templates.newFileFromTemplate`) - to create a new file from a template
     * **Files: New File Template** (`templates.newTemplate`) - to create a new blank file template.
@@ -47,7 +47,7 @@ It fixes a number of problems and adds a few features.
       ![Select Template to Edit](images/select-template-to-edit.png)<br/>
       _Theme: Light+_
 
-    * **Files: Next Snippet in File** (`templates.nextSnippet`) - to evaluate the next `${snippet}` variable.
+    * **Files: Next Snippet in File** (`templates.nextSnippet`) - to evaluate the next `${snippet}` or `${input}` variable.
 * You can define [variables](#template-variables) in the templates for Author Name, Date, File Path, User input and Snippets
 
 If you use snippet variables often it might be handy to define a key binding for the command: `templates.nextSnippet`
@@ -95,7 +95,7 @@ In the description the `:` is used as the separator, choose a different one if y
 * `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
 * <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
 * <code>${input:<em>description</em>:}</code> : Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
-* <code>${input:<em>description</em>:name=<em>name</em>:find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em>:}</code> : Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used. The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` is `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively. If the _description_ starts with `name=` that `${input}` variable is considered a named input variable.
+* <code>${input:<em>description</em>:name=<em>name</em>:find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em>:}</code> : Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used. The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively. If the _description_ starts with `name=` that `${input}` variable is considered a named input variable.
 * <code>${snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
 
