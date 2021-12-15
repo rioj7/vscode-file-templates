@@ -126,6 +126,63 @@ async function gotoCursor(editor, offsetCursor = -1) {
   }
 }
 
+class InputVariableProperties {
+  constructor(regexMatch) {
+    this.regexMatch = regexMatch;
+    this.description = 'Enter text';
+    this.name = undefined;
+    this.find = '(.*)';
+    this.replace = '$1';
+    this.flags = undefined;
+    if (regexMatch[2] !== undefined) {
+      let properties = regexMatch[3].split(regexMatch[2]);
+      let propIndex = 1; // skip description
+      if (properties[0].startsWith('name=')) {
+        propIndex = 0;
+      } else {
+        this.description = properties[0];
+      }
+      for (; propIndex < properties.length; propIndex++) {
+        const [key,value] = properties[propIndex].split('=');
+        if (key === 'name') { this.name = value; continue; }
+        if (key === 'find') { this.find = value; continue; }
+        if (key === 'flags') { this.flags = value; continue; }
+        if (key === 'replace') { this.replace = value; continue; }
+      }
+    }
+  }
+  /** @param {string} input */
+  transform(input) {
+    return input.replace(new RegExp(this.find, this.flags), this.replace);
+  }
+}
+
+/** @param {vscode.TextEditor} editor @param {RegExpMatchArray} regexMatch */
+async function processInputVariable(editor, regexMatch) {
+  let inputVars = [ new InputVariableProperties(regexMatch) ];
+  let input = await vscode.window.showInputBox({ prompt: inputVars[0].description });
+  if (input === undefined) { return false; }
+  let document = editor.document;
+  let documentText = document.getText();
+  if (inputVars[0].name !== undefined) {
+    let varRegex = getVariableWithParamsRegex('input', 'g');
+    let result;
+    while ((result = varRegex.exec(documentText)) !== null) {
+      if (result.index === inputVars[0].regexMatch.index) { continue; }
+      let inputVar = new InputVariableProperties(result);
+      if (inputVar.name !== inputVars[0].name) { continue; }
+      inputVars.push(inputVar);
+    }
+  }
+  return editor.edit( editBuilder => {
+    inputVars.forEach( e => {
+      let start = document.positionAt(e.regexMatch.index);
+      let varRange = new vscode.Range(start, start.translate(0, e.regexMatch[0].length));
+      editBuilder.replace(varRange, e.transform(input));
+    });
+  });
+}
+
 function createFile(filepath, data = '', fileExtname = '') {
   vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') })
     .then(fileBasenameNoExtension => {
@@ -189,11 +246,7 @@ function createFile(filepath, data = '', fileExtname = '') {
             while (true) {
               let found = document.getText().match(inputVarRegEx);
               if (!found) { break; }
-              let start = document.positionAt(found.index);
-              let varRange = new vscode.Range(start, start.translate(0, found[0].length));
-              let input = await vscode.window.showInputBox({ prompt: found[3] });
-              if (input === undefined) { break; }
-              await editor.edit( editBuilder => { editBuilder.replace(varRange, input); });
+              if(! await processInputVariable(editor, found)) { break; }
             }
             if (getVariableWithParamsRegex('snippet').test(document.getText())) { return; }
             gotoCursor(editor, offsetCursor);
@@ -202,6 +255,7 @@ function createFile(filepath, data = '', fileExtname = '') {
     });
 }
 
+/** @param {vscode.TextEditor} editor @param {vscode.TextEditorEdit} edit @param {any[]} args */
 function nextSnippet(editor, edit, args) {
   let document = editor.document;
   let found = document.getText().match(getVariableWithParamsRegex('snippet'));
@@ -209,6 +263,10 @@ function nextSnippet(editor, edit, args) {
     let start = document.positionAt(found.index);
     let varRange = new vscode.Range(start, start.translate(0, found[0].length));
     return editor.insertSnippet(new vscode.SnippetString(found[3]), varRange);
+  }
+  found = document.getText().match(getVariableWithParamsRegex('input'));
+  if (found) {
+    return processInputVariable(editor, found);
   }
   return gotoCursor(editor);
 }

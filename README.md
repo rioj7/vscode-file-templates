@@ -77,7 +77,7 @@ A number of variables is identical to the [variables that can be used in `tasks.
 * `${fileBasenameNoExtension}` - the current opened file's basename with no file extension
 * `${fileExtname}` - the current opened file's extension
 
-The next use settings:
+The next variables use settings:
 
 * `${author}` : use the value for setting `templates.author`
 * `${date}` : show the current date and time in a fixed format, for historic reasons this variable is still allowed.
@@ -93,12 +93,13 @@ The _`separator`_ is a string of 1 or more characters that are not part of the a
 In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
 
 * `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
-* `${dateTimeFormat:name:}` : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
-
-* `${input:description:}` : Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>
-  Example: `${input:Title of this page:}`
-* `${snippet:definition:}` : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
+* <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
+* <code>${input:<em>description</em>:}</code> : Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
+* <code>${input:<em>description</em>:name=<em>name</em>:find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em>:}</code> : Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used. The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` is `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively. If the _description_ starts with `name=` that `${input}` variable is considered a named input variable.
+* <code>${snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
+
+For template instantiation the `${input}` variables are processed at file creation. If you have some file with `${input}` variables they are also processed with the **Next Snippet in File** command. This can happen if you escape an `${input}` variable. This way you can later process them.
 
 If a snippet does not need user interaction (variable transforms) it could be done at file creation but determining this automatic might be a ToDo item.
 
@@ -279,6 +280,10 @@ page-03-005.html
 * support multiple `${cursor}` variables. To get a Multi Cursor after creating a file from a template
 
 ## Release Notes
+
+### 1.3.0
+* named input variable `${input:Enter the title:name=title:}`, reuse entered text in input variables with same name
+* find/replace text from input variable
 
 ### 1.2.0 Save As N Times
 
