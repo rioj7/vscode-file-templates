@@ -278,20 +278,3 @@ page-03-005.html
 ## TODO
 
 * support multiple `${cursor}` variables. To get a Multi Cursor after creating a file from a template
-
-## Release Notes
-
-### 1.4.0 `noUI` property of `${snippet}` variable
-
-### 1.3.0
-* named input variable `${input:Enter the title:name=title:}`, reuse entered text in input variables with same name
-* find/replace text from input variable
-* setting: `templates.saveAfterInputVariableOnFileCreation`
-
-### 1.2.0 Save As N Times
-
-### 1.1.0 named dateTimeFormats
-
-### 1.0.0
-
-Initial release of File Templates
