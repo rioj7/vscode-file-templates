@@ -23,6 +23,7 @@ It fixes a number of problems and adds a few features.
 * Create new File Templates either from an existing file or a blank file.
 * Edit User defined Templates.
 * Use [variables](#template-variables) for Author Name, Date, File Path, User input and Snippets.
+* [Construct the file name](#construct-template-filename) with variables on first line of template
 
 ## Usage
 
@@ -65,6 +66,24 @@ Each location is more specific of where the template can be used. Templates with
 
 A directory is only created when store a new template in that directory.
 
+## Construct Template Filename
+
+Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
+
+You can construct the filename to use with a special formatted first line of the template. The format is
+
+<code>##@@## <em>fileBasenameNoExtension</em></code>
+
+`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `input`, `snippet` and `cursor`).
+
+Example:
+
+```
+##@@## ${relativeFileDirnameSplit[-1]}
+```
+
+There is a global snippet defined (all languages) with the prefix `template-file-name` that has this content.
+
 ## Template variables
 
 In the template you can define a number of variables. They are evaluated at file creation time except for `${snippet}`.
@@ -73,6 +92,8 @@ A number of variables is identical to the [variables that can be used in `tasks.
 
 * `${relativeFile}` - the current opened file relative to workspaceFolder
 * `${relativeFileDirname}` - the current opened file's dirname relative to workspaceFolder
+* <code>${relativeFileDirnameSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
+* <code>${workspaceFolderSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
 * `${fileBasename}` - the current opened file's basename
 * `${fileBasenameNoExtension}` - the current opened file's basename with no file extension
 * `${fileExtname}` - the current opened file's extension

@@ -236,46 +236,96 @@ async function handleSnippetNoUI(editor) {
   return false;
 }
 
+function get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExtname) {
+  let fileBasename = fileBasenameNoExtension;
+  if ( (fileExtname.length !== 0) && !fileBasenameNoExtension.endsWith(fileExtname)) {
+    fileBasename += fileExtname;
+  }
+  let curDir = filepath;
+  if (!pathIsDirectory(filepath)) {
+    curDir = path.dirname(filepath);
+  }
+
+  let newFilePath = path.join(curDir, fileBasename);
+  return [fileBasename, newFilePath];
+}
+
+function substDirectoryPart(data, dirname, variableName) {
+  let dirnameSplit = dirname.split('/');
+  let regex = new RegExp(`\\$\\{${variableName}\\[(-\\d)\\]\\}`, 'g');
+  data = data.replace(regex, (m, p1) => {
+    let idx = dirnameSplit.length + Number(p1);
+    if (idx >= 0 && idx < dirnameSplit.length) {
+      return dirnameSplit[idx];
+    }
+    return 'Unknown';
+  });
+  return data;
+}
+
+/** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {string} */
+function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
+  let newFileURI = vscode.Uri.file(newFilePath);
+  let workspaceURI = vscode.workspace.getWorkspaceFolder(newFileURI).uri; // should always have a result
+  let relativeFile = 'Unknown';
+  let relativeFileDirname = relativeFile;
+  if (lowerCaseDriveLetter(newFileURI.path).indexOf(lowerCaseDriveLetter(workspaceURI.path)) === 0) { relativeFile = newFileURI.path.substring(workspaceURI.path.length+1); }
+  let pos = relativeFile.lastIndexOf(fileBasename);
+  if (pos !== -1) { relativeFileDirname = relativeFile.substring(0, pos); }
+  if (relativeFileDirname.endsWith('/')) { relativeFileDirname = relativeFileDirname.substring(0, relativeFileDirname.length-1); }
+  let fileBasenameNoExtension = fileBasename;
+  if ( (fileExtname.length !== 0) && fileBasename.endsWith(fileExtname)) {
+    fileBasenameNoExtension = fileBasename.substring(0, fileBasename.length - fileExtname.length);
+  }
+
+  let config = vscode.workspace.getConfiguration('templates', newFileURI);
+  data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
+  data = data.replace(/\$\{date\}/ig, new Date().toDateString());
+  data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (m, p1, p2, p3) => {
+    let dateConfig = config.get('dateTimeFormat');
+    return dateTimeFormat(p3 ? getProperty(dateConfig, p3, {}) : dateConfig, p3 ? dateConfig : {});
+  });
+  data = data.replace(/\$\{fileBasename\}/g, fileBasename);
+  data = data.replace(/\$\{fileBasenameNoExtension\}/g, fileBasenameNoExtension);
+  data = data.replace(/\$\{fileExtname\}/g, fileExtname);
+  data = data.replace(/\$\{relativeFile\}/g, relativeFile);
+  data = data.replace(/\$\{relativeFileDirname\}/g, relativeFileDirname);
+  data = substDirectoryPart(data, relativeFileDirname, 'relativeFileDirnameSplit');
+  data = substDirectoryPart(data, workspaceURI.path, 'workspaceFolderSplit');
+  // for historic reasons
+  data = data.replace(/\$\{file\}/ig, fileBasename);
+  return data;
+}
+
 function createFile(filepath, data = '', fileExtname = '') {
-  vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') })
+  new Promise((resolve, reject) => {
+    let filenamePrefix = '##@@##';
+    let fileBasenameNoExtension = undefined;
+    if (data.startsWith(filenamePrefix)) {
+      let pos = data.indexOf('\n');
+      if (pos === -1) {
+        fileBasenameNoExtension = data;
+        data = '';
+      } else {
+        fileBasenameNoExtension = data.substring(0,pos);
+        data = data.substring(pos+1);
+      }
+      fileBasenameNoExtension = fileBasenameNoExtension.substring(filenamePrefix.length+1).trim();
+      let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, '__dummy__', fileExtname);
+      resolve(variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname));
+      return
+    }
+    resolve(vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') }));
+  })
     .then(fileBasenameNoExtension => {
       if (!fileBasenameNoExtension) { return; }
-      let fileBasename = fileBasenameNoExtension;
-      if ( (fileExtname.length !== 0) && !fileBasenameNoExtension.endsWith(fileExtname)) {
-        fileBasename += fileExtname;
-      }
-      let curDir = filepath;
-      if (!pathIsDirectory(filepath))
-        curDir = path.dirname(filepath);
-
-      let newFilePath = path.join(curDir, fileBasename);
+      let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExtname);
       if (pathIsFile(newFilePath)) {
         vscode.window.showErrorMessage(`File already exists: ${newFilePath}`);
         return;
       }
+      data = variableSubstitution(data, newFilePath, fileBasename, fileExtname)
       let newFileURI = vscode.Uri.file(newFilePath);
-      let workspaceURI = vscode.workspace.getWorkspaceFolder(newFileURI).uri; // should always have a result
-      let relativeFile = 'Unknown';
-      let relativeFileDirname = relativeFile;
-      if (lowerCaseDriveLetter(newFileURI.path).indexOf(lowerCaseDriveLetter(workspaceURI.path)) === 0) { relativeFile = newFileURI.path.substring(workspaceURI.path.length+1); }
-      let pos = relativeFile.lastIndexOf(fileBasename);
-      if (pos !== -1) { relativeFileDirname = relativeFile.substring(0, pos); }
-      if (relativeFileDirname.endsWith('/')) { relativeFileDirname = relativeFileDirname.substring(0, relativeFileDirname.length-1); }
-
-      let config = vscode.workspace.getConfiguration('templates', newFileURI);
-      data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
-      data = data.replace(/\$\{date\}/ig, new Date().toDateString());
-      data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (m, p1, p2, p3) => {
-        let dateConfig = config.get('dateTimeFormat');
-        return dateTimeFormat(p3 ? getProperty(dateConfig, p3, {}) : dateConfig, p3 ? dateConfig : {});
-      });
-      data = data.replace(/\$\{fileBasename\}/g, fileBasename);
-      data = data.replace(/\$\{fileBasenameNoExtension\}/g, fileBasenameNoExtension);
-      data = data.replace(/\$\{fileExtname\}/g, fileExtname);
-      data = data.replace(/\$\{relativeFile\}/g, relativeFile);
-      data = data.replace(/\$\{relativeFileDirname\}/g, relativeFileDirname);
-      // for historic reasons
-      data = data.replace(/\$\{file\}/ig, fileBasename);
 
       let offsetCursor = -1;
       if (!getVariableWithParamsRegex('(?:input|snippet)').test(data)) {
@@ -283,7 +333,7 @@ function createFile(filepath, data = '', fileExtname = '') {
         data = data.replace(/\$\{cursor\}/g, '');
       }
 
-      let saveAfterInputVariable = config.get('saveAfterInputVariableOnFileCreation');
+      let saveAfterInputVariable = vscode.workspace.getConfiguration('templates', newFileURI).get('saveAfterInputVariableOnFileCreation');
       fs.writeFile(newFilePath, data, (err) => {
         if (err) {
           vscode.window.showErrorMessage(`Cannot create new file: ${newFilePath}`);

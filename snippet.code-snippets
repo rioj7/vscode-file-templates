@@ -1,0 +1,6 @@
+{
+  "template file name": {
+    "prefix": "template-file-name",
+    "body": "##@@## \\${relativeFileDirnameSplit[-1]}\n"
+  }
+}

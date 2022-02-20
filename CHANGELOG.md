@@ -2,7 +2,16 @@
 
 ## [Unreleased]
 ### Added
+
+## [1.5.0] 2022-02-20
+### Added
+- construct filename in template with initial line starting with `##@@##` and containing variables
+- variables `${relativeFileDirnameSplit[-1]}` and `${workspaceFolderSplit[-1]}`, `-1` .. `-9`, part of the directory relative to end
+- global snippet `template-file-name` to start constructing a filename for the new file
 - CHANGELOG.md
+
+### Modified
+- global template `file-variables.txt` to contain new variables
 
 ## [1.4.0] 2021-12-15
 ### Added
