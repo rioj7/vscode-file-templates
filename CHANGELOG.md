@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Added
 
+## [1.6.0] 2022-02-23
+### Added
+- transform (find/replace) file variables
+
 ## [1.5.0] 2022-02-20
 ### Added
 - construct filename in template with initial line starting with `##@@##` and containing variables

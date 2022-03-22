@@ -88,35 +88,65 @@ There is a global snippet defined (all languages) with the prefix `template-file
 
 In the template you can define a number of variables. They are evaluated at file creation time except for `${snippet}`.
 
+### Variable properties
+
+Some variables can have properties. This is part of the variable and needs to be specified using separator strings.
+
+<code>${<em>variableName</em> <em>separator</em> <em>properties</em> <em>separator</em>}</code>
+
+All _`separator`_'s used in a variable need to be the same.
+
+The _`separator`_ is a string of 1 or more characters that are not part of the a to z alfabet, `$` or `{}`, in regular expression `[^a-zA-Z{}$]+`. Choose a character string that is not used in the  _`properties`_ part. If you need to use more than 1 character be carefull if you use the same character, you can experience unwanted behavior. The reason is that JavaScript regular expression does not have a non-backtrack greedy quantifier. Currently the variable is matched with 1 regular expression. This makes everything easy to implement.
+
+The _`properties`_ part uses the same _`separator`_ string to separate the different properties.
+
+In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
+
+### Variable Transform (Find/Replace)
+
+The variables marked in the description with (**Transform**) can have the value transformed with 1 or more find-replace operations. The transforms are applied in the order given.
+
+Each transform is defined with the following properties:
+
+<code>find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em></code>
+
+The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively.
+
+You can define as many `[0...)` find-replace transforms as you like.
+
+#### Example
+
+Remove 2 directory names from the `${relativeFileDirname}` :
+
+```
+${relativeFileDirname##find=^([^/]+/){2}##replace=##}
+```
+
+### Variable Description
+
 A number of variables is identical to the [variables that can be used in `tasks.json` and `launch.json`](https://code.visualstudio.com/docs/editor/variables-reference#_predefined-variables):
 
-* `${relativeFile}` - the current opened file relative to workspaceFolder
-* `${relativeFileDirname}` - the current opened file's dirname relative to workspaceFolder
+* `${relativeFile}` : (**Transform**) the current opened file relative to workspaceFolder
+* `${relativeFileDirname}` : (**Transform**) the current opened file's dirname relative to workspaceFolder
 * <code>${relativeFileDirnameSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
 * <code>${workspaceFolderSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
-* `${fileBasename}` - the current opened file's basename
-* `${fileBasenameNoExtension}` - the current opened file's basename with no file extension
-* `${fileExtname}` - the current opened file's extension
+* `${fileBasename}` : (**Transform**) the current opened file's basename
+* `${fileBasenameNoExtension}` : (**Transform**) the current opened file's basename with no file extension
+* `${fileExtname}` : (**Transform**) the current opened file's extension
 
 The next variables use settings:
 
 * `${author}` : use the value for setting `templates.author`
 * `${date}` : show the current date and time in a fixed format, for historic reasons this variable is still allowed.
 
-The next variables need additional information. This is part of the variable and needs to be specified using separator strings.
-
-<code>${<em>variableName</em> <em>separator</em> <em>properties</em> <em>separator</em>}</code>
-
-All _`separator`_'s used in a variable need to be the same.
-
-The _`separator`_ is a string of 1 or more characters that are not part of the a to z alfabet, `$` or `{}`, in regular expression `[^a-zA-Z{}$]+`. Choose a character string that is not used in the  _`properties`_ part. If you need to use more than 1 character be carefull if you use the same character, you can experience unwanted behavior. The reason is that JavaScript regular expression does not have non-backtrack greedy quantifier. Currently the variable is matched with 1 regular expression. This makes everything easy to implement.
-
-In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
-
 * `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
 * <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
-* <code>${input:<em>description</em>:}</code> : Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
-* <code>${input:<em>description</em>:name=<em>name</em>:find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em>:}</code> : Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used. The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively. If the _description_ starts with `name=` that `${input}` variable is considered a named input variable.
+
+The next variables can have a GUI element:
+
+* <code>${input:<em>description</em>:}</code> : (**Transform**) Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
+* <code>${input:<em>description</em>:name=<em>name</em>:}</code> : (**Transform**) Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used.
+If the _description_ starts with `name=` that `${input}` variable is considered a named input variable that uses the default _description_ text.
 * <code>${snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
 * <code>${snippet:<em>definition</em>:noUI:}</code> : Adding the property `noUI` should only be added to `${snippet}` variables that do not need User Interaction (variable transforms). These snippets are resolved at file creation.

@@ -128,13 +128,21 @@ async function gotoCursor(editor, offsetCursor = -1) {
   }
 }
 
+class FindProperties {
+  constructor() {
+    this.find = '(.*)';
+    this.replace = '$1';
+    this.flags = undefined;
+  }
+}
+
 class VariableProperties {
   constructor(regexMatch) {
     this.regexMatch = regexMatch;
     this.name = undefined;
-    this.find = '(.*)';
-    this.replace = '$1';
-    this.flags = undefined;
+    /** @type {FindProperties[]} finds */
+    this.finds = [];
+    this.currentFind = undefined;
   }
   init() {
     if (this.regexMatch[2] === undefined) { return; }
@@ -143,16 +151,55 @@ class VariableProperties {
     for (; propIndex < properties.length; propIndex++) {
       const [key,value] = properties[propIndex].split('=');
       if (key === 'name') { this.name = value; continue; }
-      if (key === 'find') { this.find = value; continue; }
-      if (key === 'flags') { this.flags = value; continue; }
-      if (key === 'replace') { this.replace = value; continue; }
+      if (key === 'find') {
+        this.createNewFind()
+        this.currentFind.find = value;
+        continue;
+      }
+      if (key === 'flags') {
+        this.createNewFindIfNotFound();
+        this.currentFind.flags = value;
+        continue;
+      }
+      if (key === 'replace') {
+        this.createNewFindIfNotFound();
+        this.currentFind.replace = value;
+        continue;
+      }
       this.setProperty(key, value);
     }
+  }
+  createNewFind() {
+    this.currentFind = new FindProperties();
+    this.finds.push(this.currentFind);
+  }
+  createNewFindIfNotFound() {
+    if (!this.currentFind) {
+      this.createNewFind()
+    }
+  }
+  /** @param {string} input */
+  transform(input) {
+    let result = input;
+    for (const find of this.finds) {
+      result = result.replace(new RegExp(find.find, find.flags), find.replace);
+    }
+    return result;
   }
   /** @param {string[]} properties @returns {number} */
   getPropIndex(properties) { throw 'Not Implemented'; }
   setProperty(key, value) {}
 }
+
+class VariableTransformProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) { return 0; }
+}
+
 class InputVariableProperties extends VariableProperties {
   constructor(regexMatch) {
     super(regexMatch);
@@ -168,10 +215,6 @@ class InputVariableProperties extends VariableProperties {
       this.description = properties[0];
     }
     return propIndex;
-  }
-  /** @param {string} input */
-  transform(input) {
-    return input.replace(new RegExp(this.find, this.flags), this.replace);
   }
 }
 
@@ -250,17 +293,24 @@ function get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExt
   return [fileBasename, newFilePath];
 }
 
+function transformVariable(data, variableValue, variableName) {
+  let regex = getVariableWithParamsRegex(variableName, 'g');
+  return data.replace(regex, (...regexMatch) => {
+    let props = new VariableTransformProperties(regexMatch);
+    return props.transform(variableValue);
+  });
+}
+
 function substDirectoryPart(data, dirname, variableName) {
   let dirnameSplit = dirname.split('/');
   let regex = new RegExp(`\\$\\{${variableName}\\[(-\\d)\\]\\}`, 'g');
-  data = data.replace(regex, (m, p1) => {
+  return data.replace(regex, (m, p1) => {
     let idx = dirnameSplit.length + Number(p1);
     if (idx >= 0 && idx < dirnameSplit.length) {
       return dirnameSplit[idx];
     }
     return 'Unknown';
   });
-  return data;
 }
 
 /** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {string} */
@@ -285,11 +335,12 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
     let dateConfig = config.get('dateTimeFormat');
     return dateTimeFormat(p3 ? getProperty(dateConfig, p3, {}) : dateConfig, p3 ? dateConfig : {});
   });
-  data = data.replace(/\$\{fileBasename\}/g, fileBasename);
-  data = data.replace(/\$\{fileBasenameNoExtension\}/g, fileBasenameNoExtension);
-  data = data.replace(/\$\{fileExtname\}/g, fileExtname);
-  data = data.replace(/\$\{relativeFile\}/g, relativeFile);
-  data = data.replace(/\$\{relativeFileDirname\}/g, relativeFileDirname);
+  data = transformVariable(data, fileBasename, 'fileBasename');
+  data = transformVariable(data, fileBasenameNoExtension, 'fileBasenameNoExtension');
+  data = transformVariable(data, fileExtname, 'fileExtname');
+  data = transformVariable(data, relativeFile, 'relativeFile');
+  data = transformVariable(data, relativeFileDirname, 'relativeFileDirname');
+
   data = substDirectoryPart(data, relativeFileDirname, 'relativeFileDirnameSplit');
   data = substDirectoryPart(data, workspaceURI.path, 'workspaceFolderSplit');
   // for historic reasons
