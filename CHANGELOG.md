@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Added
 
+## [1.7.0] 2022-03-25
+### Added
+- define properties in `${dateTimeFormat}` variable
+
 ## [1.6.0] 2022-02-23
 ### Added
 - transform (find/replace) file variables

@@ -70,7 +70,7 @@ A directory is only created when store a new template in that directory.
 
 Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
 
-You can construct the filename to use with a special formatted first line of the template. The format is
+You can construct the filename to use with a **special formatted first line** of the template. The format is
 
 <code>##@@## <em>fileBasenameNoExtension</em></code>
 
@@ -86,7 +86,7 @@ There is a global snippet defined (all languages) with the prefix `template-file
 
 ## Template variables
 
-In the template you can define a number of variables. They are evaluated at file creation time except for `${snippet}`.
+In the template you can define a number of variables. They are evaluated at file creation time except for `${snippet}` variables that do not have the property `noUI`.
 
 ### Variable properties
 
@@ -101,6 +101,10 @@ The _`separator`_ is a string of 1 or more characters that are not part of the a
 The _`properties`_ part uses the same _`separator`_ string to separate the different properties.
 
 In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
+
+All variables can span multiple lines to make the properties more readable. All whitespace at the start of a property is removed. Prevent whitespace at the end of a property value by ending a line with the _`separator`_.
+
+If the property is a <code><em>key</em>=<em>value</em></code> pair the whitespace around `=` is part of the _`key`_ or the _`value`_.
 
 ### Variable Transform (Find/Replace)
 
@@ -138,9 +142,23 @@ The next variables use settings:
 
 * `${author}` : use the value for setting `templates.author`
 * `${date}` : show the current date and time in a fixed format, for historic reasons this variable is still allowed.
-
 * `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
-* <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The format properties override what is defined in `templates.dateTimeFormat`.
+* <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The named format properties override what is defined in `templates.dateTimeFormat`.
+* <code>${dateTimeFormat#<em>properties</em>#}</code> : define _`properties`_ to construct a [date-time](#variable-datetimeformat).  
+  Best to use a different separator (`#`) because `:` is a character used in JSON strings.  
+  Allowed properties are:
+    * _`key_only`_ : a property that has no value is equal to _`name=key_only`_
+    * <code>name=<em>value</em></code> : use the named format in the setting `templates.dateTimeFormat`
+    * <code>locale=<em>value</em></code> : override the _`locale`_ property to use
+    * <code>options=<em>JSON-string</em></code> : override the _`options`_ property to use. It must be a valid JSON string: `{.....}`
+    * <code>template=<em>value</em></code> : override the _`template`_ property to use
+
+  The properties _`locale`_, _`options`_, _`template`_ are searched for in the following order:
+    1. the variable format properties
+    1. the _named_ format in the setting `templates.dateTimeFormat`, if a `name` is specified.
+    1. the `templates.dateTimeFormat` setting
+
+  The first place where it is defined is used.
 
 The next variables can have a GUI element:
 
@@ -161,6 +179,8 @@ A final empty variable to place the cursor:
 
 This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`. It can use the unnamed format properties or you can use <em>name</em>d format properties: <code>${dateTimeFormat:<em>name</em>:}</code> (example uses separator `:`)
 
+Another possibility is <code>${dateTimeFormat#<em>properties</em>#}</code> to (optionally) name a format and override some of its properties in the [variable properties](#variable_properties). Or define all 3 properties in the variable properties. See Example 4.
+
 The setting `templates.dateTimeFormat` is an object with properties that are used to call [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) to create a language-sensitive format of the current date and time.
 
 The `locale` and `options` properties are the arguments for the [`Intl.DateTimeFormat` constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat/DateTimeFormat) and are optional.
@@ -169,15 +189,17 @@ The `locale` property can be a single string or an array of strings of language 
 
 The `template` property is an optional template string that uses the same placeholder syntax as the [Javascript template strings](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals). You can add as many literal text as needed.
 
-The only expressions valid are the `type` values returned by the [`Intl.DateTimeFormat.prototype.formatToParts()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat/formatToParts) method. See first example.
+The only expressions valid are the `type` values returned by the [`Intl.DateTimeFormat.prototype.formatToParts()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat/formatToParts) method. See example 1.
 
-If there is no `template` property the value parts of the `Intl.DateTimeFormat.prototype.formatToParts()` are joined. See second example.
+If there is no `template` property the value parts of the `Intl.DateTimeFormat.prototype.formatToParts()` are joined. See example 2.
 
 ### Named DateTime Formats
 
 Any other property of `templates.dateTimeFormat` is a <em>name</em>d DateTimeFormat object that can define the properties `locale`, `options` and `template`. These properties override the values defined in `templates.dateTimeFormat`. See Example 3.
 
 ### Example 1
+
+**`settings.json`**
 
 ```json
     "templates.dateTimeFormat": {
@@ -205,6 +227,8 @@ The result is
 
 You can use a different locale and number system and use the long format:
 
+**`settings.json`**
+
 ```json
     "templates.dateTimeFormat": {
       "locale": "fr-FR-u-nu-deva",
@@ -223,6 +247,8 @@ jeudi १९ mars २०२० à १७:५९:५७ heure normale d’Europe 
 
 ### Example 3 Named DateTime Formats
 
+**`settings.json`**
+
 ```json
     "templates.dateTimeFormat": {
       "locale": "en-US",
@@ -237,7 +263,20 @@ jeudi १९ mars २०२० à १७:५९:५७ heure normale d’Europe 
       },
       "template": "${year}/${month}/${day}-${hour}:${minute}:${second}",
       "year-only": { "template": "${year}" },
-      "timeHMS": { "template": "${hour}:${minute}:${second}" }
+      "timeHMS": { "template": "${hour}:${minute}:${second}" },
+      "long": {
+        "options": {
+          "year": "numeric",
+          "month": "long",
+          "day": "numeric",
+          "weekday": "long",
+          "hour12": false,
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit"
+        },
+        "template": "${weekday} ${month} ${day} ${year}"
+      }
     }
 ```
 
@@ -249,9 +288,38 @@ ${dateTimeFormat:year-only:}
 ${dateTimeFormat:timeHMS:}
 ```
 
+### Example 4 DateTime Format properties in the variable
+
+You can specify any of the properties _`locale`_, _`options`_, _`template`_ in the variable and a possible _`name`_.
+
+Using the **`settings.json`** from Example 3 we can use the following variables in the template:
+
+```
+${dateTimeFormat#
+    template=${year}/${month}/${day} at ${hour}:42#}
+
+${dateTimeFormat#long#
+    template=${hour}:${minute} on ${weekday} ${month} ${day} ${year}#}
+
+${dateTimeFormat#name=long#
+    template=Let's join at ${hour}:00 one day in ${month} ${year}#
+    options={
+          "year": "numeric",
+          "month": "long",
+          "day": "numeric",
+          "weekday": "long",
+          "hour12": false,
+          "hour": "2-digit",
+          "minute": "2-digit",
+          "second": "2-digit",
+          "numberingSystem": "thai"
+        }
+    #}
+```
+
 ## Extension Settings
 
-This extension has the following settings:
+This extension has the following settings that can be defined in [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings) :
 
 * `templates.author` : Set the Author name.
 * `templates.Author` : Set the Author name. **Deprecated**: Please use `templates.author` instead.

@@ -82,20 +82,23 @@ function editTemplate() {
 }
 
 const NEW_FILE = 'Files: New File';
-// const CREATE_TEMPLATE = 'Files: New File Template';
-// const EDIT_TEMPLATE = 'Files: Edit File Template';
-// const TEMPLATES_PREFIX = 'Template: ';
 const cursorVar = '${cursor}';
 
 // String.prototype.replaceAll = function(search, replacement) {
 //   return this.replace(new RegExp(search, 'g'), replacement);
 // };
 
-const dateTimeFormat = (args, parentArgs) => {
-  let getPropertyEx = (obj, prop, parentObj) => getProperty(obj, prop, getProperty(parentObj, prop, undefined));
-  let locale = getPropertyEx(args, 'locale', parentArgs);
-  let options = getPropertyEx(args, 'options', parentArgs);
-  let template = getPropertyEx(args, 'template', parentArgs);
+const dateTimeFormat = (...argsList) => {
+  let getPropertyEx = (objList, prop) => {
+    for (const obj of objList) {
+      let v = getProperty(obj, prop, undefined);
+      if (v !== undefined) { return v; }
+    }
+    return undefined;
+  };
+  let locale = getPropertyEx(argsList, 'locale');
+  let options = getPropertyEx(argsList, 'options');
+  let template = getPropertyEx(argsList, 'template');
   let parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
   if (!template) { return parts.map(({type, value}) => value).join(''); }
   let dateTimeFormatParts = {};
@@ -109,7 +112,7 @@ function getAuthor(config) {
   return config.get('author');
 }
 
-function getVariableWithParamsRegex(varName, flags) { return new RegExp(`\\$\\{${varName}(\\}|([^a-zA-Z{}$]+)(.+?)\\2\\})`, flags); }
+function getVariableWithParamsRegex(varName, flags) { return new RegExp(`\\$\\{${varName}(\\}|([^a-zA-Z{}$]+)([\\s\\S]+?)\\2\\})`, flags); }
 
 async function gotoCursor(editor, offsetCursor = -1) {
   let document = editor.document;
@@ -146,10 +149,11 @@ class VariableProperties {
   }
   init() {
     if (this.regexMatch[2] === undefined) { return; }
-    let properties = this.regexMatch[3].split(this.regexMatch[2]);
+    let properties = this.regexMatch[3].split(this.regexMatch[2]).map(s => s.trimStart());
     let propIndex = this.getPropIndex(properties);
     for (; propIndex < properties.length; propIndex++) {
-      const [key,value] = properties[propIndex].split('=');
+      const [key,...parts] = properties[propIndex].split('=');
+      const value = parts.length > 0 ? parts.join('=') : undefined;
       if (key === 'name') { this.name = value; continue; }
       if (key === 'find') {
         this.createNewFind()
@@ -198,6 +202,30 @@ class VariableTransformProperties extends VariableProperties {
   }
   /** @param {string[]} properties @returns {number} */
   getPropIndex(properties) { return 0; }
+}
+
+class DateTimeFormatProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.config = {};
+    this.nameConfig = {};
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) { return 0; }
+  setProperty(key, value) {
+    if (value === undefined) { this.name = key; return; }
+    if (key === 'locale') { this.config.locale = value; return; }
+    if (key === 'template') { this.config.template = value; return; }
+    if (key === 'options') {
+      try {
+        this.config.options = JSON.parse(value);
+      } catch {
+        vscode.window.showErrorMessage('Error parsing "options" property of dateTimeFormat variable. Invalid JSON.');
+      }
+      return;
+    }
+  }
 }
 
 class InputVariableProperties extends VariableProperties {
@@ -331,9 +359,13 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
   let config = vscode.workspace.getConfiguration('templates', newFileURI);
   data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
   data = data.replace(/\$\{date\}/ig, new Date().toDateString());
-  data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (m, p1, p2, p3) => {
+  data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (...regexMatch) => {
     let dateConfig = config.get('dateTimeFormat');
-    return dateTimeFormat(p3 ? getProperty(dateConfig, p3, {}) : dateConfig, p3 ? dateConfig : {});
+    let props = new DateTimeFormatProperties(regexMatch);
+    if (props.name) {
+      props.nameConfig = getProperty(dateConfig, props.name, {});
+    }
+    return dateTimeFormat(props.config, props.nameConfig, dateConfig);
   });
   data = transformVariable(data, fileBasename, 'fileBasename');
   data = transformVariable(data, fileBasenameNoExtension, 'fileBasenameNoExtension');
