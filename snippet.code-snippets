@@ -1,4 +1,8 @@
 {
+  "template file name:date-input": {
+    "prefix": "template-file-name-date-input",
+    "body": "##@@## \\${dateTimeFormat:iso:}\\${input#Additional#find=^(.+)\\$#replace=-\\$1#}\n"
+  },
   "template file name": {
     "prefix": "template-file-name",
     "body": "##@@## \\${relativeFileDirnameSplit[-1]}\n"

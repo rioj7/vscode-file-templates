@@ -380,8 +380,35 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
   return data;
 }
 
+/** @param {InputVariableProperties} varProps */
+async function input(varProps) {
+  let input = await vscode.window.showInputBox({ prompt: varProps.description });
+  if (input === undefined) { return undefined; }
+  return varProps.transform(input);
+}
+
+async function asyncVariable(text, func) {
+  let asyncArgs = [];
+  let varRegex = getVariableWithParamsRegex(func.name, 'g');
+  text = text.replace(varRegex, (...regexMatch) => {
+    if (func.name === 'input') {
+      asyncArgs.push(new InputVariableProperties(regexMatch));
+    }
+    return regexMatch[0];
+  });
+  if (asyncArgs.length === 0) { return text; }
+  for (let i = 0; i < asyncArgs.length; i++) {
+    asyncArgs[i] = await func(asyncArgs[i]);
+    if (asyncArgs[i] === undefined) { return undefined; }
+  }
+  text = text.replace(varRegex, (...regexMatch) => {
+    return asyncArgs.shift();
+  });
+  return text;
+};
+
 function createFile(filepath, data = '', fileExtname = '') {
-  new Promise((resolve, reject) => {
+  new Promise(async (resolve, reject) => {
     let filenamePrefix = '##@@##';
     let fileBasenameNoExtension = undefined;
     if (data.startsWith(filenamePrefix)) {
@@ -395,7 +422,9 @@ function createFile(filepath, data = '', fileExtname = '') {
       }
       fileBasenameNoExtension = fileBasenameNoExtension.substring(filenamePrefix.length+1).trim();
       let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, '__dummy__', fileExtname);
-      resolve(variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname));
+      fileBasenameNoExtension = variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname);
+      fileBasenameNoExtension = await asyncVariable(fileBasenameNoExtension, input);
+      resolve(fileBasenameNoExtension);
       return
     }
     resolve(vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') }));

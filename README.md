@@ -71,15 +71,29 @@ You can construct the filename to use with a **special formatted first line** of
 
 <code>##@@## <em>fileBasenameNoExtension</em></code>
 
-`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `input`, `snippet` and `cursor`).
+`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms not the _named_ variant.
 
-Example:
+Example 1:
 
 ```
 ##@@## ${relativeFileDirnameSplit[-1]}
 ```
 
 There is a global snippet defined (all languages) with the prefix `template-file-name` that has this content.
+
+Example 2:
+
+If you have defined a `dateTimeFormat` named `iso` and you want to create file names that start with a date and a possible addition you can use:
+
+```
+##@@## ${dateTimeFormat:iso:}${input#Additional#find=^(.+)$#replace=-$1#}
+```
+
+* if you cancel the input box no file is created.
+* if you enter the empty string you only get the date file name
+* if you type some additional text a separator (here `-`) will be added
+
+There is a global snippet defined (all languages) with the prefix `template-file-name-date-input` that has this content.
 
 ## Template variables
 

@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Added
 
+## [1.8.0] 2022-04-09
+### Added
+- Construct Template Filename (`##@@##`) line now supports `${input:description:}` variables
+
 ## [1.7.0] 2022-03-25
 ### Added
 - define properties in `${dateTimeFormat}` variable
