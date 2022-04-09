@@ -33,21 +33,18 @@ It fixes a number of problems and adds a few features.
   It shows a menu with existing templates. Select the desired template and enter the new file name without extension. The new file will get the same extension as the selected template.
 * In the  Context menu (Right-click) of the editor you will see menu entries:
     * **New File from Template** : Create a new file that is a sibling of the current file.
-    * **New Template from File** : Use the current active document as a start for a new template.<br/>You are asked in which directory you want this template stored and with which name.
-
-      ![Select Folder for New Template](images/select-folder-new-template.png)<br/>
+    * **New Template from File** : Use the current active document as a start for a new template.  
+      You are asked in which directory you want this template stored and with which name.  
+      ![Select Folder for New Template](images/select-folder-new-template.png)  
       _Theme: Light+_
-
     * **Next Snippet in File** : the [`${snippet}` variables](#template-variables) needs to be evaluated after creation of the file because the editor needs to be put in _Snippet_ mode. This also resolves the `${cursor}` variable as a final snippet.<br/>If there are no `${snippet}` or `${cursor}` variables nothing happens.<br/>Any `${input}` variables still in the file are also processed.
 * From the Command Palette you can select:
     * **Files: New File from Template** (`templates.newFileFromTemplate`) - to create a new file from a template
     * **Files: New File Template** (`templates.newTemplate`) - to create a new blank file template.
     * **Files: New Template from File** (`templates.newTemplateFromFile`) - to create a new template from the current active file.
-    * **Files: Edit File Template** (`templates.editTemplate`) - to edit a template.
-
-      ![Select Template to Edit](images/select-template-to-edit.png)<br/>
+    * **Files: Edit File Template** (`templates.editTemplate`) - to edit a template.  
+      ![Select Template to Edit](images/select-template-to-edit.png)  
       _Theme: Light+_
-
     * **Files: Next Snippet in File** (`templates.nextSnippet`) - to evaluate the next `${snippet}` or `${input}` variable.
 * You can define [variables](#template-variables) in the templates for Author Name, Date, File Path, User input and Snippets
 
