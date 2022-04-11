@@ -546,18 +546,12 @@ async function newFileFromTemplate(uri) {
     getTemplates(templateDirs, override)
       .then(templatesInfo => {
         templatesInfo.unshift( { label: NEW_FILE } );
-        // [{label:CREATE_TEMPLATE}, {label:EDIT_TEMPLATE}]
         return vscode.window.showQuickPick(templatesInfo, { placeHolder: 'Select a template to create from' });
       })
       .then(templateInfo => {
         if (!templateInfo) { return; }
 
         if (!templateInfo.filePath) {
-          // if(templateInfo.label === CREATE_TEMPLATE)
-          //   newTemplate();
-          // else if(templateInfo.label === EDIT_TEMPLATE){
-          //   editTemplate();
-          // }
           if (templateInfo.label === NEW_FILE)
             createFile(currentPath);
           return;
