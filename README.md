@@ -27,6 +27,8 @@ It fixes a number of problems and adds a few features.
 
 ## Usage
 
+The locations, if needed, for the **User** Templates and **Multiroot Workspace** Templates need to be defined by the user in the [Templates Location](#templates-location) settings.
+
 * If you select an entry in the File Explorer and use the Context menu (Right-click) you will see a menu entry **New File from Template**.<br/>
   If the Explorer entry is a directory the new file will be created in this directory.<br/>
   If the Explorer entry is a file the new file will a sibling.<br/>
@@ -57,21 +59,26 @@ The templates can be stored in several locations:
 * **Extension** : The extension has a number of predefined templates that can not be edited or add to. After an update of the extension these edits would be gone.
 * **User** : in a user defined directory from the setting `templates.folder` in the User settings (a good location is `<homedir>/.vscode/templates`, the installed extensions are stored in a sibling directory) (Optional)
 * **Multiroot Workspace** : in a user defined directory from the setting `templates.folder` in the Workspace settings (`.code-workspace` file) (Optional)
-* **Worksapce/Folder** : When one folder is open the templates are stored in the directory `.vscode/templates`
+* **Workspace/Folder** : When a folder is open the templates are stored in the directory `.vscode/templates`
 
 Each location is more specific of where the template can be used. Templates with the same name override templates on a more generic level. When you need to select a template to create from it shows the location of the template and the more specific ones are listed first
 
-A directory is only created when store a new template in that directory.
+A directory is only created when you store a new template in that directory.
 
 ## Construct Template Filename
-
-Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
 
 You can construct the filename to use with a **special formatted first line** of the template. The format is
 
 <code>##@@## <em>fileBasenameNoExtension</em></code>
 
-`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms not the _named_ variant.
+`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
+
+If you use a `${dateTimeFormat}` variable with properties it has to be on one line.
+
+You can use it to:
+
+* Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
+* Add a date somewhere in the filename
 
 Example 1:
 
@@ -297,6 +304,7 @@ In the template use these variables (example uses `:` as separator):
 ${dateTimeFormat}
 ${dateTimeFormat:year-only:}
 ${dateTimeFormat:timeHMS:}
+${dateTimeFormat:long:}
 ```
 
 ### Example 4 DateTime Format properties in the variable
