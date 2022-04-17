@@ -25,6 +25,10 @@ It fixes a number of problems and adds a few features.
 * Use [variables](#template-variables) for Author Name, Date, File Path, User input and Snippets.
 * [Construct the file name](#construct-template-filename) with variables on first line of template
 
+## Known problems
+
+* If you have opened a **Multiroot Workspace** and you have no editor/file open and you select the command **Files: New File from Template** from the Command Palette, or use the a shortcut key, you get a QuickPick selection with the text **Select a folder to choose templates from and to place the file**. If you escape this QuickPick because you want to abort the new file creation you also have to abort the QuickPick selection with the text **Select a template to create from**. The reason is that if you want to create a new file on an absolute path but you want to choose a global template you can escape the folder selection but you want to choose a template.
+
 ## Usage
 
 The locations, if needed, for the **User** Templates and **Multiroot Workspace** Templates need to be defined by the user in the [Templates Location](#templates-location) settings.
@@ -69,9 +73,20 @@ A directory is only created when you store a new template in that directory.
 
 You can construct the filename to use with a **special formatted first line** of the template. The format is
 
-<code>##@@## <em>fileBasenameNoExtension</em></code>
+<code>##@@## <em>filePathNoExtension</em></code>
 
-`fileBasenameNoExtension` is text that can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
+`filePathNoExtension` is the absolute/relative path of the file without the file extension. The text can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
+
+Always use `/` as directory separator. Also on Windows.
+
+* **absolute path**
+  * <code>##@@## /<em>filePathNoExtension</em></code> (Unix)
+  * <code>##@@## <em>driveLetter</em>:/<em>filePathNoExtension</em></code> (Windows)
+* **relative path**
+  * <code>##@@## ~/<em>filePathNoExtension</em></code> in User Home directory
+  * <code>##@@## ~w/<em>filePathNoExtension</em></code> in workspace folder
+  * <code>##@@## ~f/<em>filePathNoExtension</em></code> in workspace folder
+  * <code>##@@## <em>filePathNoExtension</em></code> relative to current file or selected entry in File Explorer
 
 If you use a `${dateTimeFormat}` variable with properties it has to be on one line.
 
@@ -79,6 +94,7 @@ You can use it to:
 
 * Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
 * Add a date somewhere in the filename
+* Use `date` and `input` variables to create part of the directories in the path
 
 Example 1:
 
@@ -101,6 +117,14 @@ If you have defined a `dateTimeFormat` named `iso` and you want to create file n
 * if you type some additional text a separator (here `-`) will be added
 
 There is a global snippet defined (all languages) with the prefix `template-file-name-date-input` that has this content.
+
+Example 3:
+
+Save the file in the User Home directory and group the files by year and month in a directory:
+
+```
+##@@## ~/blog/${dateTimeFormat#options={"year":"numeric","month":"2-digit","day":"2-digit"}#template=${year}/${month}/${day}#}${input#Subject#find=^(.+)$#replace=-$1#}
+```
 
 ## Template variables
 

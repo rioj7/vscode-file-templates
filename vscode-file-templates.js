@@ -7,6 +7,7 @@ const extensionTemplatesPath = path.join(__dirname, 'templates');
 const getProperty = (obj, prop, deflt) => { return obj.hasOwnProperty(prop) ? obj[prop] : deflt; };
 
 const workspaceFolder2TemplateDirFolder = wsf => ({ label: `  $(folder) Folder: ${wsf.name}`, uri: vscode.Uri.file(path.join(wsf.uri.fsPath, '.vscode', 'templates')) });
+const templateDirFolder2WorkspacePath = tdf => path.dirname(path.dirname(tdf.uri.fsPath));  // remove '/.vscode/templates' OS independent
 
 function pathExists(path) { return fs.existsSync(path); }
 function pathIsDirectory(path) { return pathExists(path) && fs.statSync(path).isDirectory(); }
@@ -17,21 +18,24 @@ const nonPosixPathRegEx = new RegExp('^/([a-zA-Z]):/');
 const lowerCaseDriveLetter = p => p.replace(nonPosixPathRegEx, match => match.toLowerCase() );
 
 function withTemplateDirs(action) {
-  if (vscode.workspace.workspaceFolders === undefined) {
-    vscode.window.showErrorMessage('No workspace open');
-    return;
-  }
-  let config = vscode.workspace.getConfiguration('templates', vscode.workspace.workspaceFolders[0].uri);
+  let configScope = vscode.workspace.workspaceFolders === undefined ? undefined : vscode.workspace.workspaceFolders[0].uri;
+  let config = vscode.workspace.getConfiguration('templates', configScope);
   let inspect = config.inspect('folder');
   if (inspect === undefined) { inspect = {key:undefined}; }
-  let templateDirs = {};
+  let templateDirs = { folders: [] };
   if (inspect.globalValue) {
     templateDirs.global = { label: '  $(home) User', uri: vscode.Uri.file(inspect.globalValue) }
   }
-  if ((vscode.workspace.workspaceFolders.length > 1) && inspect.workspaceValue) {
-    templateDirs.workspace = { label: `  $(list-tree) Workspace: ${vscode.workspace.name.replace(' (Workspace)', '')} `, uri: vscode.Uri.file(inspect.workspaceValue) }
+  if (vscode.workspace.workspaceFolders === undefined && templateDirs.global === undefined) {
+    vscode.window.showErrorMessage('No User location for templates defined. User settings: \"templates.folder\"');
+    return;
   }
-  templateDirs.folders = vscode.workspace.workspaceFolders.map( wsf => workspaceFolder2TemplateDirFolder(wsf) );
+  if (vscode.workspace.workspaceFolders !== undefined) {
+    if ((vscode.workspace.workspaceFolders.length > 1) && inspect.workspaceValue) {
+      templateDirs.workspace = { label: `  $(list-tree) Workspace: ${vscode.workspace.name.replace(' (Workspace)', '')} `, uri: vscode.Uri.file(inspect.workspaceValue) }
+    }
+    templateDirs.folders = vscode.workspace.workspaceFolders.map( wsf => workspaceFolder2TemplateDirFolder(wsf) );
+  }
   action(templateDirs);
 }
 
@@ -45,7 +49,7 @@ function getTemplates(templateDirs, override = false) {
       if (!pathIsDirectory(dirPath)) { return; }
       let files = fs.readdirSync(dirPath);
       files.forEach((file, index) => {
-        if (file === 'file-variables.txt') { index = 10000; } // when will get an issue by somebody who has that many templates defined
+        if (file === 'file-variables.txt') { index = 10000; } // when will we get an issue by somebody who has that many templates defined
         if (override) { templates = templates.filter( t => t.label !== file); }
         templates.push( {label: file, description: templateDir.label, filePath: path.join(dirPath, file), sort: [sequence, index] } );
       });
@@ -343,20 +347,23 @@ function substDirectoryPart(data, dirname, variableName) {
 
 /** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {string} */
 function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
-  let newFileURI = vscode.Uri.file(newFilePath);
-  let workspaceURI = vscode.workspace.getWorkspaceFolder(newFileURI).uri; // should always have a result
+  let newFileURI = vscode.Uri.file(newFilePath); // file can be outside a workspace
+  let workspaceFolder = vscode.workspace.getWorkspaceFolder(newFileURI);
+  let workspaceURI = workspaceFolder ? workspaceFolder.uri : undefined;
   let relativeFile = 'Unknown';
   let relativeFileDirname = relativeFile;
-  if (lowerCaseDriveLetter(newFileURI.path).indexOf(lowerCaseDriveLetter(workspaceURI.path)) === 0) { relativeFile = newFileURI.path.substring(workspaceURI.path.length+1); }
-  let pos = relativeFile.lastIndexOf(fileBasename);
-  if (pos !== -1) { relativeFileDirname = relativeFile.substring(0, pos); }
-  if (relativeFileDirname.endsWith('/')) { relativeFileDirname = relativeFileDirname.substring(0, relativeFileDirname.length-1); }
+  if (workspaceURI) {
+    if (lowerCaseDriveLetter(newFileURI.path).indexOf(lowerCaseDriveLetter(workspaceURI.path)) === 0) { relativeFile = newFileURI.path.substring(workspaceURI.path.length+1); }
+    let pos = relativeFile.lastIndexOf(fileBasename);
+    if (pos !== -1) { relativeFileDirname = relativeFile.substring(0, pos); }
+    if (relativeFileDirname.endsWith('/')) { relativeFileDirname = relativeFileDirname.substring(0, relativeFileDirname.length-1); }
+  }
   let fileBasenameNoExtension = fileBasename;
   if ( (fileExtname.length !== 0) && fileBasename.endsWith(fileExtname)) {
     fileBasenameNoExtension = fileBasename.substring(0, fileBasename.length - fileExtname.length);
   }
 
-  let config = vscode.workspace.getConfiguration('templates', newFileURI);
+  let config = vscode.workspace.getConfiguration('templates', workspaceURI ? newFileURI : undefined);
   data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
   data = data.replace(/\$\{date\}/ig, new Date().toDateString());
   data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (...regexMatch) => {
@@ -374,7 +381,7 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
   data = transformVariable(data, relativeFileDirname, 'relativeFileDirname');
 
   data = substDirectoryPart(data, relativeFileDirname, 'relativeFileDirnameSplit');
-  data = substDirectoryPart(data, workspaceURI.path, 'workspaceFolderSplit');
+  data = substDirectoryPart(data, workspaceURI ? workspaceURI.path : '', 'workspaceFolderSplit');
   // for historic reasons
   data = data.replace(/\$\{file\}/ig, fileBasename);
   return data;
@@ -407,7 +414,7 @@ async function asyncVariable(text, func) {
   return text;
 };
 
-function createFile(filepath, data = '', fileExtname = '') {
+function createFile(filepath, workspacePath = undefined, data = '', fileExtname = '') {
   new Promise(async (resolve, reject) => {
     let filenamePrefix = '##@@##';
     let fileBasenameNoExtension = undefined;
@@ -421,6 +428,44 @@ function createFile(filepath, data = '', fileExtname = '') {
         data = data.substring(pos+1);
       }
       fileBasenameNoExtension = fileBasenameNoExtension.substring(filenamePrefix.length+1).trim();
+
+      // check if path is absolute: / or d:/ or ~/ or ~w/ or ~f/ and construct the "filepath"
+      if (new RegExp('^~[wf]/').test(fileBasenameNoExtension)) {
+        if (!workspacePath) {
+          vscode.window.showErrorMessage('No workspace to use in file path construction.');
+          resolve(undefined);  // simulate escaped Inputbox
+          return;
+        }
+        fileBasenameNoExtension = fileBasenameNoExtension.replace(/^~[wf]/, m => workspacePath);
+      }
+      if (fileBasenameNoExtension.startsWith('~/')) {
+        let home = getProperty(process.env, 'HOME');
+        if (!home) {  // OS = Windows
+          let homeDrive = getProperty(process.env, 'HOMEDRIVE');
+          let homePath = getProperty(process.env, 'HOMEPATH');
+          if (homeDrive && homePath) {
+            home = homeDrive + homePath;
+          }
+        }
+        if (!home) {
+          vscode.window.showErrorMessage('Unable to determine HOME directory');
+          resolve(undefined);  // simulate escaped Inputbox
+          return;
+        }
+        fileBasenameNoExtension = fileBasenameNoExtension.replace(new RegExp('^~'), m => home);
+      }
+      fileBasenameNoExtension = fileBasenameNoExtension.replace('\\', '/');
+      if (new RegExp('^(/|[a-zA-Z]:/)').test(fileBasenameNoExtension)) {
+        let fileBasenameNoExtensionPart = fileBasenameNoExtension;
+        let firstVarPos = fileBasenameNoExtension.indexOf('${');
+        if (firstVarPos !== -1) {
+          fileBasenameNoExtensionPart = fileBasenameNoExtension.substring(0, firstVarPos);
+        }
+        let lastPos = fileBasenameNoExtensionPart.lastIndexOf('/');
+        filepath = fileBasenameNoExtension.substring(0, lastPos);
+        fileBasenameNoExtension = fileBasenameNoExtension.substring(lastPos + 1);
+      }
+
       let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, '__dummy__', fileExtname);
       fileBasenameNoExtension = variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname);
       fileBasenameNoExtension = await asyncVariable(fileBasenameNoExtension, input);
@@ -446,6 +491,7 @@ function createFile(filepath, data = '', fileExtname = '') {
       }
 
       let saveAfterInputVariable = vscode.workspace.getConfiguration('templates', newFileURI).get('saveAfterInputVariableOnFileCreation');
+      createDirectory(path.dirname(newFileURI.fsPath));
       fs.writeFile(newFilePath, data, (err) => {
         if (err) {
           vscode.window.showErrorMessage(`Cannot create new file: ${newFilePath}`);
@@ -503,8 +549,9 @@ function nextSnippet(editor, edit, args) {
 }
 
 var getWorkspaceFolder = async (folders) => {
+  if (folders.length === 0) { return undefined; }
   if (folders.length === 1) { return folders[0]; }
-  return vscode.window.showQuickPick(folders, { placeHolder: 'Select a folder to place file' })
+  return vscode.window.showQuickPick(folders, { placeHolder: 'Select a folder to choose templates from and to place the file' })
     .then( folder => {
       if (!folder) return undefined;
       return folder;
@@ -519,17 +566,15 @@ async function getCurrentPath_TemplateDirFolder(uri, templateDirs) {
   }
   if (!currentURI) {
     let templateDirFolder = await getWorkspaceFolder(templateDirs.folders);
-    if (templateDirFolder) { currentURI = vscode.Uri.file(path.dirname(path.dirname(templateDirFolder.uri.fsPath))); }  // remove '/.vscode/templates' OS independent
+    if (templateDirFolder) { currentURI = vscode.Uri.file(templateDirFolder2WorkspacePath(templateDirFolder)); }
   }
   let currentPath = undefined;
   let templateDirFolder = undefined;
   if (currentURI) {
+    currentPath = currentURI.fsPath;
     let workspace = vscode.workspace.getWorkspaceFolder(currentURI);
     if (workspace) {
-      currentPath = currentURI.fsPath;
       templateDirFolder = workspaceFolder2TemplateDirFolder(workspace);
-    } else {
-      vscode.window.showErrorMessage('Current file not part of workspace.');
     }
   }
   return {currentPath, templateDirFolder};
@@ -539,9 +584,9 @@ async function getCurrentPath_TemplateDirFolder(uri, templateDirs) {
 async function newFileFromTemplate(uri) {
   withTemplateDirs(async (templateDirs) => {
     let {currentPath, templateDirFolder} = await getCurrentPath_TemplateDirFolder(uri, templateDirs);
-    if (!currentPath) return;
     templateDirs.extension = { label: '  $(extensions) Extension', uri: vscode.Uri.file(extensionTemplatesPath) };
-    templateDirs.folders = [ templateDirFolder ];
+    templateDirs.folders = templateDirFolder ? [ templateDirFolder ] : [];
+    let workspacePath = templateDirFolder ? templateDirFolder2WorkspacePath(templateDirFolder) : undefined;
     let override = true;
     getTemplates(templateDirs, override)
       .then(templatesInfo => {
@@ -552,8 +597,13 @@ async function newFileFromTemplate(uri) {
         if (!templateInfo) { return; }
 
         if (!templateInfo.filePath) {
-          if (templateInfo.label === NEW_FILE)
-            createFile(currentPath);
+          if (templateInfo.label === NEW_FILE) {
+            if (currentPath === undefined) {
+              vscode.commands.executeCommand('workbench.action.files.newUntitledFile');
+            } else {
+              createFile(currentPath);
+            }
+          }
           return;
         }
 
@@ -563,7 +613,7 @@ async function newFileFromTemplate(uri) {
             return;
           }
           let extension = templateInfo.filePath.substring(templateInfo.filePath.lastIndexOf('.'));
-          createFile(currentPath, data, extension);
+          createFile(currentPath, workspacePath, data, extension);
         });
       });
   });
