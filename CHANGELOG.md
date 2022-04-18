@@ -3,6 +3,11 @@
 ## [Unreleased]
 ### Added
 
+## [1.9.0] 2022-04-18
+### Added
+- Construct Template Filename (`##@@##`) line now supports absolute and relative file paths
+- use the same `Date()` object for all the `date` variables used during template instantiation
+
 ## [1.8.0] 2022-04-09
 ### Added
 - Construct Template Filename (`##@@##`) line now supports `${input:description:}` variables

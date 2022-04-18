@@ -17,6 +17,8 @@ function removeThemeIcon(text) { return text.replace(/\$\([-\w]+\)/g, ''); }
 const nonPosixPathRegEx = new RegExp('^/([a-zA-Z]):/');
 const lowerCaseDriveLetter = p => p.replace(nonPosixPathRegEx, match => match.toLowerCase() );
 
+let gCurrentDate = undefined;  // use the same Date() for all variables in the template
+
 function withTemplateDirs(action) {
   let configScope = vscode.workspace.workspaceFolders === undefined ? undefined : vscode.workspace.workspaceFolders[0].uri;
   let config = vscode.workspace.getConfiguration('templates', configScope);
@@ -103,7 +105,7 @@ const dateTimeFormat = (...argsList) => {
   let locale = getPropertyEx(argsList, 'locale');
   let options = getPropertyEx(argsList, 'options');
   let template = getPropertyEx(argsList, 'template');
-  let parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
+  let parts = new Intl.DateTimeFormat(locale, options).formatToParts(gCurrentDate);
   if (!template) { return parts.map(({type, value}) => value).join(''); }
   let dateTimeFormatParts = {};
   parts.forEach(({type, value}) => { dateTimeFormatParts[type] = value; });
@@ -365,7 +367,7 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
 
   let config = vscode.workspace.getConfiguration('templates', workspaceURI ? newFileURI : undefined);
   data = data.replace(/\$\{author\}/ig, getAuthor(config));  // config.get('author'));
-  data = data.replace(/\$\{date\}/ig, new Date().toDateString());
+  data = data.replace(/\$\{date\}/ig, gCurrentDate.toDateString());
   data = data.replace(getVariableWithParamsRegex('dateTimeFormat', 'g'), (...regexMatch) => {
     let dateConfig = config.get('dateTimeFormat');
     let props = new DateTimeFormatProperties(regexMatch);
@@ -582,6 +584,7 @@ async function getCurrentPath_TemplateDirFolder(uri, templateDirs) {
 }
 
 async function newFileFromTemplate(uri) {
+  gCurrentDate = new Date();
   withTemplateDirs(async (templateDirs) => {
     let {currentPath, templateDirFolder} = await getCurrentPath_TemplateDirFolder(uri, templateDirs);
     templateDirs.extension = { label: '  $(extensions) Extension', uri: vscode.Uri.file(extensionTemplatesPath) };
