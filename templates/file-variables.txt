@@ -1,6 +1,7 @@
 author = ${author}
 date = ${date}
 dateTimeFormat = ${dateTimeFormat}
+dateTimeFormat 5 days in the future = ${dateTimeFormat:offset=+5D:}
 fileBasename = ${fileBasename}
 fileBasenameNoExtension = ${fileBasenameNoExtension}
 fileExtname = ${fileExtname}

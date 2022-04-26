@@ -105,7 +105,48 @@ const dateTimeFormat = (...argsList) => {
   let locale = getPropertyEx(argsList, 'locale');
   let options = getPropertyEx(argsList, 'options');
   let template = getPropertyEx(argsList, 'template');
-  let parts = new Intl.DateTimeFormat(locale, options).formatToParts(gCurrentDate);
+  let offset = getPropertyEx(argsList, 'offset');
+  let useDate = new Date(gCurrentDate);
+  if (offset) {
+    for (const delta of offset.split(' ')) {
+      let match = delta.match(new RegExp('^([-+]\\d+)([YMD])$'));
+      if (match) {
+        let number = Number(match[1]);
+        switch (match[2]) {
+          case 'Y': useDate.setFullYear(useDate.getFullYear()+number); break;
+          case 'M': useDate.setMonth(useDate.getMonth()+number); break;
+          case 'D': useDate.setDate(useDate.getDate()+number); break;
+        }
+        continue;
+      }
+      match = delta.match(new RegExp('^([-+]\\d+)([hms])$'));
+      if (match) {
+        let number = Number(match[1]);
+        let delta_ms = 0;
+        switch (match[2]) {
+          case 'h': delta_ms = 60 * 60 * 1000; break;
+          case 'm': delta_ms = 60 * 1000; break;
+          case 's': delta_ms = 1000; break;
+        }
+        useDate.setTime(useDate.getTime()+delta_ms*number);
+        continue;
+      }
+      match = delta.match(new RegExp('^([-+]\\d+)WD([0-6])$'));
+      if (match) {
+        let number = Number(match[1]);
+        let weekday = Number(match[2]);
+        let deltaDay = number < 0 ? -1 : 1;
+        number = Math.abs(number);
+        for (; number > 0; number--) {
+          while (useDate.getDay() !== weekday) {
+            useDate.setDate(useDate.getDate()+deltaDay);
+          }
+        }
+        continue;
+      }
+    }
+  }
+  let parts = new Intl.DateTimeFormat(locale, options).formatToParts(useDate);
   if (!template) { return parts.map(({type, value}) => value).join(''); }
   let dateTimeFormatParts = {};
   parts.forEach(({type, value}) => { dateTimeFormatParts[type] = value; });
@@ -231,6 +272,7 @@ class DateTimeFormatProperties extends VariableProperties {
       }
       return;
     }
+    if (key === 'offset') { this.config.offset = value; return; }
   }
 }
 

@@ -3,6 +3,10 @@
 ## [Unreleased]
 ### Added
 
+## [1.10.0] 2022-04-26
+### Added
+- `${dateTimeFormat}` variable has property `offset` to calculate a date in the future or past, `+1M +10h`
+
 ## [1.9.0] 2022-04-18
 ### Added
 - Construct Template Filename (`##@@##`) line now supports absolute and relative file paths
