@@ -602,6 +602,27 @@ function nextSnippet(editor, edit, args) {
   return gotoCursor(editor);
 }
 
+/** @param {vscode.TextEditor} editor @param {vscode.TextEditorEdit} edit @param {any[]} args */
+function pasteTemplate(editor, edit, args) {
+  if (args === undefined) {
+    vscode.window.showInformationMessage('Currently only with Key Binding.');
+    return;
+  }
+  let text = getProperty(args, 'text');
+  if (text === undefined) { return; }
+  gCurrentDate = new Date();
+  let template = text.join('\n');
+  let fsPath = editor.document.uri.fsPath;
+  let fileBasename = path.basename(fsPath);
+  let fileExtname = '';
+  let pos = fileBasename.lastIndexOf('.');
+  if (pos !== -1) {
+    fileExtname = fileBasename.substring(pos);
+  }
+  let data = variableSubstitution(template, fsPath, fileBasename, fileExtname);
+  editor.edit(editBuilder => { editor.selections.forEach(s => { editBuilder.replace(s, data); }); });
+}
+
 var getWorkspaceFolder = async (folders) => {
   if (folders.length === 0) { return undefined; }
   if (folders.length === 1) { return folders[0]; }
@@ -848,6 +869,7 @@ function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand('templates.newTemplate', newTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.editTemplate', editTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.newFileFromTemplate', newFileFromTemplate));
+  context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.pasteTemplate', pasteTemplate));
   context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.nextSnippet', nextSnippet));
   context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.fileSaveAsNTimes', fileSaveAsNTimes));
 }

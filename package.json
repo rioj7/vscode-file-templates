@@ -4,7 +4,7 @@
   "description": "Create files based on templates. Save As current file N Times.",
   "publisher": "rioj7",
   "license": "MIT",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "engines": {"vscode": "^1.50.0"},
   "categories": ["Other"],
   "keywords": [ "templates", "template", "file", "snippets", "multi-root ready", "saveas" ],
@@ -15,6 +15,7 @@
     "onCommand:templates.newFileFromTemplate",
     "onCommand:templates.editTemplate",
     "onCommand:templates.newTemplate",
+    "onCommand:templates.pasteTemplate",
     "onCommand:templates.nextSnippet",
     "onCommand:templates.fileSaveAsNTimes"
   ],
@@ -139,6 +140,11 @@
       }
     },
     "commands": [
+      {
+        "command": "templates.pasteTemplate",
+        "title": "Paste Template",
+        "category": "Files"
+      },
       {
         "command": "templates.newTemplate",
         "title": "New File Template",

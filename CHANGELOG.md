@@ -3,6 +3,13 @@
 ## [Unreleased]
 ### Added
 
+## [1.11.0] 2022-04-30
+### Added
+- `templates.pasteTemplate` : Insert template with key binding in current file
+- `${dateTimeFormat}` property `offset` allow `wd`, `d` and `y` for WeekDay, Day and Year
+- `${dateTimeFormat}` property `offset` calculate WeekDay fast, no need to use `-1WD1 -700D`
+- Construct Template Filename: all lines at file start with `##@@##` create the Template Filename (strip all whitespace at start and end of each line)
+
 ## [1.10.0] 2022-04-26
 ### Added
 - `${dateTimeFormat}` variable has property `offset` to calculate a date in the future or past, `+1M +10h`

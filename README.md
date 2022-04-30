@@ -24,6 +24,7 @@ It fixes a number of problems and adds a few features.
 * Edit User defined Templates.
 * Use [variables](#template-variables) for Author Name, Date, File Path, User input and Snippets.
 * [Construct the file name](#construct-template-filename) with variables on first line of template
+* Insert a template with a key binding
 
 ## Known problems
 
@@ -55,6 +56,65 @@ The locations, if needed, for the **User** Templates and **Multiroot Workspace**
 * You can define [variables](#template-variables) in the templates for Author Name, Date, File Path, User input and Snippets
 
 If you use snippet variables often it might be handy to define a key binding for the command: `templates.nextSnippet`
+
+## Insert Template in current file
+
+The command `templates.pasteTemplate` allows to insert a template into the current editor. Every selection is replaced with the template. At the moment the variables `${input}`, `${snippet}` and `${cursor}` are not allowed (yet) in an insert template.
+
+The argument of the command is an object with a parameter `text` that is an array of lines that make the template.
+
+An example to insert some dates with offsets in the current file:
+
+**`settings.json`**
+
+```
+  "templates.dateTimeFormat": {
+    "locale": "en-US",
+    "options": {
+      "year": "numeric",
+      "month": "2-digit",
+      "day": "2-digit",
+      "hour12": false,
+      "hour": "2-digit",
+      "minute": "2-digit",
+      "second": "2-digit",
+      "weekday": "long"
+    },
+    "template": "${weekday} ${year}-${month}-${day} ${hour}:${minute}:${second}",
+    "week-schedule-head": {
+      "template": "${month}/${day}"
+    },
+    "week-schedule": {
+      "options": {
+        "year": "numeric",
+        "month": "short",
+        "day": "2-digit",
+        "weekday": "long",
+      },
+      "template": "${weekday} ${month} ${day}, ${year}"
+    }
+  }
+```
+
+**`keybindings.json`**
+
+```
+  {
+    "key": "ctrl+alt+w",  // or any other combo
+    "command": "templates.pasteTemplate",
+    "args": {
+      "text": [
+        "## Week (${dateTimeFormat:week-schedule-head:offset=+1wd0 +1d:}–${dateTimeFormat:week-schedule-head:offset=+1wd0 +5d:})",
+        "- [ ]",
+        "",
+        "### ${dateTimeFormat:week-schedule:offset=+1wd0 +1d:}",
+        "- [ ] Snippet",
+        "",
+        "----"
+      ]
+    }
+  }
+```
 
 ## Templates Location
 
