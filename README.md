@@ -77,6 +77,8 @@ You can construct the filename to use with a **special formatted first line** of
 
 `filePathNoExtension` is the absolute/relative path of the file without the file extension. The text can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
 
+All lines, up to the first line **not** starting with `##@@##` are used to construct the Template Filename. Each line is stripped of the prefix and all whitespace at start and end.
+
 Always use `/` as directory separator. Also on Windows.
 
 * **absolute path**
@@ -95,6 +97,7 @@ You can use it to:
 * Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
 * Add a date somewhere in the filename
 * Use `date` and `input` variables to create part of the directories in the path
+* create a template for `.vscode/settings.json`, `.vscode/tasks.json` or `.vscode/launch.json` and specify the path relative to the workspace.
 
 Example 1:
 
@@ -124,6 +127,15 @@ Save the file in the User Home directory and group the files by year and month i
 
 ```
 ##@@## ~/blog/${dateTimeFormat#options={"year":"numeric","month":"2-digit","day":"2-digit"}#template=${year}/${month}/${day}#}${input#Subject#find=^(.+)$#replace=-$1#}
+```
+
+Or on multiple lines:
+
+```
+##@@## ~/blog/${dateTimeFormat#
+##@@##          options={"year":"numeric","month":"2-digit","day":"2-digit"}#
+##@@##          template=${year}/${month}/${day}#}
+##@@##     ${input#Subject#find=^(.+)$#replace=-$1#}
 ```
 
 ## Template variables

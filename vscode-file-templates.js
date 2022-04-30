@@ -463,15 +463,19 @@ function createFile(filepath, workspacePath = undefined, data = '', fileExtname 
     let filenamePrefix = '##@@##';
     let fileBasenameNoExtension = undefined;
     if (data.startsWith(filenamePrefix)) {
-      let pos = data.indexOf('\n');
-      if (pos === -1) {
-        fileBasenameNoExtension = data;
-        data = '';
-      } else {
-        fileBasenameNoExtension = data.substring(0,pos);
-        data = data.substring(pos+1);
+      fileBasenameNoExtension = '';
+      while (data.startsWith(filenamePrefix)) {
+        let newContent = undefined;
+        let pos = data.indexOf('\n');
+        if (pos === -1) {
+          newContent = data;
+          data = '';
+        } else {
+          newContent = data.substring(0,pos);
+          data = data.substring(pos+1);
+        }
+        fileBasenameNoExtension += newContent.substring(filenamePrefix.length+1).trim();
       }
-      fileBasenameNoExtension = fileBasenameNoExtension.substring(filenamePrefix.length+1).trim();
 
       // check if path is absolute: / or d:/ or ~/ or ~w/ or ~f/ and construct the "filepath"
       if (new RegExp('^~[wf]/').test(fileBasenameNoExtension)) {
