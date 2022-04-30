@@ -109,12 +109,14 @@ const dateTimeFormat = (...argsList) => {
   let useDate = new Date(gCurrentDate);
   if (offset) {
     for (const delta of offset.split(' ')) {
-      let match = delta.match(new RegExp('^([-+]\\d+)([YMD])$'));
+      let match = delta.match(new RegExp('^([-+]\\d+)([YMDyd])$'));
       if (match) {
         let number = Number(match[1]);
         switch (match[2]) {
+          case 'y':
           case 'Y': useDate.setFullYear(useDate.getFullYear()+number); break;
           case 'M': useDate.setMonth(useDate.getMonth()+number); break;
+          case 'd':
           case 'D': useDate.setDate(useDate.getDate()+number); break;
         }
         continue;
@@ -131,16 +133,20 @@ const dateTimeFormat = (...argsList) => {
         useDate.setTime(useDate.getTime()+delta_ms*number);
         continue;
       }
-      match = delta.match(new RegExp('^([-+]\\d+)WD([0-6])$'));
+      match = delta.match(new RegExp('^([-+]\\d+)(?:WD|wd)([0-6])$'));
       if (match) {
         let number = Number(match[1]);
         let weekday = Number(match[2]);
         let deltaDay = number < 0 ? -1 : 1;
         number = Math.abs(number);
-        for (; number > 0; number--) {
+        if (number > 0) {
           while (useDate.getDay() !== weekday) {
             useDate.setDate(useDate.getDate()+deltaDay);
           }
+          --number;
+        }
+        if (number > 0) {
+          useDate.setDate(useDate.getDate()+number*7*deltaDay);
         }
         continue;
       }
