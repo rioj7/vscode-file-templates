@@ -4,6 +4,10 @@
 ### Added
 
 ## [1.11.0] 2022-04-30
+### Modified
+- `README`: prevent KaTex Markdown to recognize a math expression
+
+## [1.11.0] 2022-04-30
 ### Added
 - `templates.pasteTemplate` : Insert template with key binding in current file
 - `${dateTimeFormat}` property `offset` allow `wd`, `d` and `y` for WeekDay, Day and Year

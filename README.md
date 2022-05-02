@@ -135,7 +135,7 @@ You can construct the filename to use with a **special formatted first line** of
 
 <code>##@@## <em>filePathNoExtension</em></code>
 
-`filePathNoExtension` is the absolute/relative path of the file without the file extension. The text can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>${input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
+`filePathNoExtension` is the absolute/relative path of the file without the file extension. The text can contain [variables](#template-variables) (not the `snippet` and `cursor`). Only <code>&dollar;{input:<em>description</em>:}</code> is supported with transforms, not the _named_ variant.
 
 All lines, up to the first line **not** starting with `##@@##` are used to construct the Template Filename. Each line is stripped of the prefix and all whitespace at start and end.
 
@@ -206,7 +206,7 @@ In the template you can define a number of variables. They are evaluated at file
 
 Some variables can have properties. This is part of the variable and needs to be specified using separator strings.
 
-<code>${<em>variableName</em> <em>separator</em> <em>properties</em> <em>separator</em>}</code>
+<code>&dollar;{<em>variableName</em> <em>separator</em> <em>properties</em> <em>separator</em>}</code>
 
 All _`separator`_'s used in a variable need to be the same.
 
@@ -228,7 +228,7 @@ Each transform is defined with the following properties:
 
 <code>find=<em>regex</em>:flags=<em>string</em>:replace=<em>string</em></code>
 
-The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>$<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively.
+The text is [searched and replaced with a regular expression](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace). All occurrences of `find` are replaced if `flags` has `g`. The capture groups in the `find` regex can be used in the `replace` string with <code>&dollar;<em>n</em></code> (like `$1`). `flags` are the regex flags used in the search. If `find`, `flags` or `replace` property are not defined they default to `(.*)`, _emptyString_ and `$1` respectively.
 
 You can define as many `[0...)` find-replace transforms as you like.
 
@@ -246,8 +246,8 @@ A number of variables is identical to the [variables that can be used in `tasks.
 
 * `${relativeFile}` : (**Transform**) the current opened file relative to workspaceFolder
 * `${relativeFileDirname}` : (**Transform**) the current opened file's dirname relative to workspaceFolder
-* <code>${relativeFileDirnameSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
-* <code>${workspaceFolderSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
+* <code>&dollar;{relativeFileDirnameSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
+* <code>&dollar;{workspaceFolderSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
 * `${fileBasename}` : (**Transform**) the current opened file's basename
 * `${fileBasenameNoExtension}` : (**Transform**) the current opened file's basename with no file extension
 * `${fileExtname}` : (**Transform**) the current opened file's extension
@@ -257,8 +257,8 @@ The next variables use settings:
 * `${author}` : use the value for setting `templates.author`
 * `${date}` : show the current date and time in a fixed format, for historic reasons this variable is still allowed.
 * `${dateTimeFormat}` : use the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat).
-* <code>${dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The named format properties override what is defined in `templates.dateTimeFormat`.
-* <code>${dateTimeFormat#<em>properties</em>#}</code> : define _`properties`_ to construct a [date-time](#variable-datetimeformat).  
+* <code>&dollar;{dateTimeFormat:<em>name</em>:}</code> : use a _named_ format in the setting `templates.dateTimeFormat` to construct a [date-time](#variable-datetimeformat). The named format properties override what is defined in `templates.dateTimeFormat`.
+* <code>&dollar;{dateTimeFormat#<em>properties</em>#}</code> : define _`properties`_ to construct a [date-time](#variable-datetimeformat).  
   Best to use a different separator (`#`) because `:` is a character used in JSON strings.  
   Allowed properties are:
     * _`key_only`_ : a property that has no value is equal to _`name=key_only`_
@@ -289,12 +289,12 @@ The next variables use settings:
 
 The next variables can have a GUI element:
 
-* <code>${input:<em>description</em>:}</code> : (**Transform**) Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
-* <code>${input:<em>description</em>:name=<em>name</em>:}</code> : (**Transform**) Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used.
+* <code>&dollar;{input:<em>description</em>:}</code> : (**Transform**) Ask the user some text and use the _`properties`_ part as the description for the InputBox<br/>Example: `${input:Title of this page:}`
+* <code>&dollar;{input:<em>description</em>:name=<em>name</em>:}</code> : (**Transform**) Ask the user some text and use the text in all named `${input}` variables with the same _name_. If no _name_ given only for this variable the text is used.
 If the _description_ starts with `name=` that `${input}` variable is considered a named input variable that uses the default _description_ text.
-* <code>${snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
+* <code>&dollar;{snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
-* <code>${snippet:<em>definition</em>:noUI:}</code> : Adding the property `noUI` should only be added to `${snippet}` variables that do not need User Interaction (variable transforms). These snippets are resolved at file creation.
+* <code>&dollar;{snippet:<em>definition</em>:noUI:}</code> : Adding the property `noUI` should only be added to `${snippet}` variables that do not need User Interaction (variable transforms). These snippets are resolved at file creation.
 
 For template instantiation the `${input}` variables are processed at file creation. If you have some file with `${input}` variables they are also processed with the **Next Snippet in File** command. This can happen if you escape an `${input}` variable. This way you can later process them.
 
@@ -304,9 +304,9 @@ A final empty variable to place the cursor:
 
 ## Variable dateTimeFormat
 
-This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`. It can use the unnamed format properties or you can use <em>name</em>d format properties: <code>${dateTimeFormat:<em>name</em>:}</code> (example uses separator `:`)
+This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`. It can use the unnamed format properties or you can use <em>name</em>d format properties: <code>&dollar;{dateTimeFormat:<em>name</em>:}</code> (example uses separator `:`)
 
-Another possibility is <code>${dateTimeFormat#<em>properties</em>#}</code> to (optionally) name a format and override some of its properties in the [variable properties](#variable_properties). Or define all 3 properties in the variable properties. See Example 4.
+Another possibility is <code>&dollar;{dateTimeFormat#<em>properties</em>#}</code> to (optionally) name a format and override some of its properties in the [variable properties](#variable_properties). Or define all 3 properties in the variable properties. See Example 4.
 
 The setting `templates.dateTimeFormat` is an object with properties that are used to call [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) to create a language-sensitive format of the current date and time.
 
