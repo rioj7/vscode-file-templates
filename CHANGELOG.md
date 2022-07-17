@@ -3,7 +3,9 @@
 ## [Unreleased]
 ### Added
 
-## [1.11.0] 2022-04-30
+## [1.12.0] 2022-07-17
+### Added
+- possibility to have variables `${...}` in the result file, with template content `$\{...}`
 ### Modified
 - `README`: prevent KaTex Markdown to recognize a math expression
 

@@ -432,6 +432,10 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
 
   data = substDirectoryPart(data, relativeFileDirname, 'relativeFileDirnameSplit');
   data = substDirectoryPart(data, workspaceURI ? workspaceURI.path : '', 'workspaceFolderSplit');
+
+  // to allow variables in the result template we have to fix the "$\{...}" texts
+  data = data.replace(/\$\\\{/g, '${');
+
   // for historic reasons
   data = data.replace(/\$\{file\}/ig, fileBasename);
   return data;

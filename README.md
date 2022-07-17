@@ -302,6 +302,12 @@ A final empty variable to place the cursor:
 
 * `${cursor}` : If you want the cursor to end in a specific location after the file is created or as a last snippet use this variable
 
+## Literal `${...}` in result
+
+When you have a template for a `tasks.json` or `launch.json` you may want to have variables in the result when you create a file from a template. Variables like `${relativeFile}` that are replaced when you create the file. This can be done by wrting `$\{relativeFile}` in the template.
+
+When the file is created variables are searched with the regular expression <code>\\&dollar;\\{<em>name</em>.*?\\}</code>. This will not match `$\{relativeFile}`. At the end the string `$\{` is replaced with `${` using the regular expression `\$\\\{`.
+
 ## Variable dateTimeFormat
 
 This variable `${dateTimeFormat}` uses the setting `templates.dateTimeFormat`. It can use the unnamed format properties or you can use <em>name</em>d format properties: <code>&dollar;{dateTimeFormat:<em>name</em>:}</code> (example uses separator `:`)
