@@ -1,7 +1,8 @@
 # Change Log
 
-## [Unreleased]
+## [1.13.0] 2023-04-19
 ### Added
+- variable `${command}` with optional arguments
 
 ## [1.12.0] 2022-07-17
 ### Added

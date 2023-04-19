@@ -4,7 +4,7 @@
   "description": "Create files based on templates. Save As current file N Times.",
   "publisher": "rioj7",
   "license": "MIT",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "engines": {"vscode": "^1.50.0"},
   "categories": ["Other"],
   "keywords": [ "templates", "template", "file", "snippets", "multi-root ready", "saveas" ],

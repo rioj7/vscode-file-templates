@@ -274,7 +274,7 @@ class DateTimeFormatProperties extends VariableProperties {
       try {
         this.config.options = JSON.parse(value);
       } catch {
-        vscode.window.showErrorMessage('Error parsing "options" property of dateTimeFormat variable. Invalid JSON.');
+        vscode.window.showErrorMessage('Error parsing "options" property of "dateTimeFormat" variable. Invalid JSON.');
       }
       return;
     }
@@ -315,6 +315,29 @@ class SnippetVariableProperties extends VariableProperties {
   }
   setProperty(key, value) {
     if (key === 'noUI') { this.hasUI = false; return; }
+  }
+}
+
+class CommandVariableProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.command = undefined;
+    this.args = {};
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) { return 0; }
+  setProperty(key, value) {
+    if (value === undefined) { return; }
+    if (key === 'command') { this.command = value; return; }
+    if (key === 'args') {
+      try {
+        this.args = JSON.parse(value);
+      } catch {
+        vscode.window.showErrorMessage('Error parsing "args" property of "command" variable. Invalid JSON.');
+      }
+      return;
+    }
   }
 }
 
@@ -394,9 +417,8 @@ function substDirectoryPart(data, dirname, variableName) {
     return 'Unknown';
   });
 }
-
-/** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {string} */
-function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
+/** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {Promise<string>} */
+async function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
   let newFileURI = vscode.Uri.file(newFilePath); // file can be outside a workspace
   let workspaceFolder = vscode.workspace.getWorkspaceFolder(newFileURI);
   let workspaceURI = workspaceFolder ? workspaceFolder.uri : undefined;
@@ -424,6 +446,9 @@ function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
     }
     return dateTimeFormat(props.config, props.nameConfig, dateConfig);
   });
+
+  data = await asyncVariable(data, command, regexMatch => new CommandVariableProperties(regexMatch));
+
   data = transformVariable(data, fileBasename, 'fileBasename');
   data = transformVariable(data, fileBasenameNoExtension, 'fileBasenameNoExtension');
   data = transformVariable(data, fileExtname, 'fileExtname');
@@ -447,20 +472,27 @@ async function input(varProps) {
   if (input === undefined) { return undefined; }
   return varProps.transform(input);
 }
+/** @param {CommandVariableProperties} varProps */
+async function command(varProps) {
+  let command = varProps.command;
+  if (!command) { return 'Unknown'; }
+  return vscode.commands.executeCommand(command, varProps.args);
+}
 
-async function asyncVariable(text, func) {
+async function asyncVariable(text, func, funcProperties, abortOnUndefined) {
   let asyncArgs = [];
   let varRegex = getVariableWithParamsRegex(func.name, 'g');
   text = text.replace(varRegex, (...regexMatch) => {
-    if (func.name === 'input') {
-      asyncArgs.push(new InputVariableProperties(regexMatch));
-    }
+    asyncArgs.push(funcProperties(regexMatch));
     return regexMatch[0];
   });
   if (asyncArgs.length === 0) { return text; }
   for (let i = 0; i < asyncArgs.length; i++) {
     asyncArgs[i] = await func(asyncArgs[i]);
-    if (asyncArgs[i] === undefined) { return undefined; }
+    if (asyncArgs[i] === undefined) {
+      if (abortOnUndefined) { return undefined; }  // ${input}
+      asyncArgs[i] = 'Unknown';  // ${command}
+    }
   }
   text = text.replace(varRegex, (...regexMatch) => {
     return asyncArgs.shift();
@@ -525,21 +557,21 @@ function createFile(filepath, workspacePath = undefined, data = '', fileExtname 
       }
 
       let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, '__dummy__', fileExtname);
-      fileBasenameNoExtension = variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname);
-      fileBasenameNoExtension = await asyncVariable(fileBasenameNoExtension, input);
+      fileBasenameNoExtension = await variableSubstitution(fileBasenameNoExtension, newFilePath, fileBasename, fileExtname);
+      fileBasenameNoExtension = await asyncVariable(fileBasenameNoExtension, input, regexMatch => new InputVariableProperties(regexMatch), true);
       resolve(fileBasenameNoExtension);
-      return
+      return;
     }
     resolve(vscode.window.showInputBox({ prompt: 'Enter new file name' + (fileExtname.length !==0 ? ' (without extension)' : '') }));
   })
-    .then(fileBasenameNoExtension => {
+    .then(async fileBasenameNoExtension => {
       if (!fileBasenameNoExtension) { return; }
       let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExtname);
       if (pathIsFile(newFilePath)) {
         vscode.window.showErrorMessage(`File already exists: ${newFilePath}`);
         return;
       }
-      data = variableSubstitution(data, newFilePath, fileBasename, fileExtname)
+      data = await variableSubstitution(data, newFilePath, fileBasename, fileExtname)
       let newFileURI = vscode.Uri.file(newFilePath);
 
       let offsetCursor = -1;
@@ -606,10 +638,11 @@ function nextSnippet(editor, edit, args) {
   return gotoCursor(editor);
 }
 
-/** @param {vscode.TextEditor} editor @param {vscode.TextEditorEdit} edit @param {any[]} args */
-function pasteTemplate(editor, edit, args) {
+async function pasteTemplate(args) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) { return; }
   if (args === undefined) {
-    vscode.window.showInformationMessage('Currently only with Key Binding.');
+    vscode.window.showInformationMessage('Currently only with Key Binding or command execution.');
     return;
   }
   let text = getProperty(args, 'text');
@@ -623,7 +656,7 @@ function pasteTemplate(editor, edit, args) {
   if (pos !== -1) {
     fileExtname = fileBasename.substring(pos);
   }
-  let data = variableSubstitution(template, fsPath, fileBasename, fileExtname);
+  let data = await variableSubstitution(template, fsPath, fileBasename, fileExtname);
   editor.edit(editBuilder => { editor.selections.forEach(s => { editBuilder.replace(s, data); }); });
 }
 
@@ -873,7 +906,7 @@ function activate(context) {
   context.subscriptions.push(vscode.commands.registerCommand('templates.newTemplate', newTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.editTemplate', editTemplate));
   context.subscriptions.push(vscode.commands.registerCommand('templates.newFileFromTemplate', newFileFromTemplate));
-  context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.pasteTemplate', pasteTemplate));
+  context.subscriptions.push(vscode.commands.registerCommand('templates.pasteTemplate', pasteTemplate));
   context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.nextSnippet', nextSnippet));
   context.subscriptions.push(vscode.commands.registerTextEditorCommand('templates.fileSaveAsNTimes', fileSaveAsNTimes));
 }

@@ -22,7 +22,7 @@ It fixes a number of problems and adds a few features.
 * Create new files from defined templates.
 * Create new File Templates either from an existing file or a blank file.
 * Edit User defined Templates.
-* Use [variables](#template-variables) for Author Name, Date, File Path, User input and Snippets.
+* Use [variables](#template-variables) for Author Name, Date, File Path, User input, calling command results and Snippets.
 * [Construct the file name](#construct-template-filename) with variables on first line of template
 * Insert a template with a key binding
 
@@ -214,9 +214,11 @@ The _`separator`_ is a string of 1 or more characters that are not part of the a
 
 The _`properties`_ part uses the same _`separator`_ string to separate the different properties.
 
-In the description the `:` is used as the separator, choose a different one if you use this character in the variable property.
+In the description the `:` or `##` is used as the separator, choose a different one if you use this in the variable property.
 
 All variables can span multiple lines to make the properties more readable. All whitespace at the start of a property is removed. Prevent whitespace at the end of a property value by ending a line with the _`separator`_.
+
+The variable must end with <code><em>separator</em>}</code>. That means no whitespace after the last _`separator`_. Also for variables spanning multi lines.
 
 If the property is a <code><em>key</em>=<em>value</em></code> pair the whitespace around `=` is part of the _`key`_ or the _`value`_.
 
@@ -251,6 +253,7 @@ A number of variables is identical to the [variables that can be used in `tasks.
 * `${fileBasename}` : (**Transform**) the current opened file's basename
 * `${fileBasenameNoExtension}` : (**Transform**) the current opened file's basename with no file extension
 * `${fileExtname}` : (**Transform**) the current opened file's extension
+* <code>&dollar;{command##command=<em>commandID</em>##args=<em>JSON_object</em>##}</code> : The result of calling the command with the _`commandID`_ and the given (optional) `args` JSON object. The `args` property is passed as is to the command. No variables in the strings are evaluated. The command must know how to handle them. ([example](#variable-command))
 
 The next variables use settings:
 
@@ -464,6 +467,47 @@ ${dateTimeFormat:week-schedule:offset=+1WD0 +5D:}   # Friday
 ```
 
 You can add any other property you like.
+
+## Variable command
+
+The variable `${command}` calls a commandID with an optional argument and replaces the variable with the result.
+
+In the example we use a property defined in a JSON file that is in the same directory as where the template is placed.
+
+It uses the extension [Command Variable](https://marketplace.visualstudio.com/items?itemName=rioj7.command-variable) to read a JSON property.
+
+The JSON file **`component.json`** stored in the folder is:
+
+```json
+{
+  "component": {
+    "name": "MyCoolServer"
+  }
+}
+```
+
+The template or the command `templates.pasteTemplate` can read the content of the file:
+
+```none
+/*---------------------------------
+ *  COMPONENT   : ${command##
+                    command=extension.commandvariable.file.content##
+                    args={ "fileName": "${fileDirname}/component.json",
+                           "json": "content.component.name"}##}
+ *  UNIT        : ${fileBasename}
+ ---------------------------------*/
+```
+
+The result could be:
+
+```none
+/*---------------------------------
+ *  COMPONENT   : MyCoolServer
+ *  UNIT        : contact.c
+ ---------------------------------*/
+```
+
+The `json` property of the `extension.commandvariable.file.content` is a JavaScript expression. You could perform a number calculation or string manipulation (concatenation, split, join, map, ...) with the values extracted from the JSON file.
 
 ## Extension Settings
 
