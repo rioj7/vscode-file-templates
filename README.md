@@ -150,8 +150,6 @@ Always use `/` as directory separator. Also on Windows.
   * <code>##@@## ~f/<em>filePathNoExtension</em></code> in workspace folder
   * <code>##@@## <em>filePathNoExtension</em></code> relative to current file or selected entry in File Explorer
 
-If you use a `${dateTimeFormat}` variable with properties it has to be on one line.
-
 You can use it to:
 
 * Some frameworks name the file in a certain way based on the directory stored or the class defined in the file.
@@ -309,7 +307,9 @@ A final empty variable to place the cursor:
 
 When you have a template for a `tasks.json` or `launch.json` you may want to have variables in the result when you create a file from a template. Variables like `${relativeFile}` that are replaced when you create the file. This can be done by wrting `$\{relativeFile}` in the template.
 
-When the file is created variables are searched with the regular expression <code>\\&dollar;\\{<em>name</em>.*?\\}</code>. This will not match `$\{relativeFile}`. At the end the string `$\{` is replaced with `${` using the regular expression `\$\\\{`.
+When the file is created variables are searched with the regular expression <code>\\&dollar;\\{<em>name</em>.*?\\}</code>.  
+This will not match `$\{relativeFile}`.  
+At the end the string `$\{` is replaced with `${` using the regular expression `\$\\\{`.
 
 ## Variable dateTimeFormat
 
