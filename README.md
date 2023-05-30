@@ -519,7 +519,9 @@ This extension has the following settings that can be defined in [`settings.json
 * `templates.dateTimeFormat` : An object describing the properties used by the [`${dateTimeFormat}` variable](#variable-datetimeformat)
 * `templates.saveAfterInputVariableOnFileCreation` : Save the file after processing ${input} variables when the file is created.
 
-## KeyBindings
+## Key Bindings
+
+The extension defines a few key bindings:
 
 * Create a New File from template
 
@@ -530,6 +532,24 @@ This extension has the following settings that can be defined in [`settings.json
 
     * Windows:  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
     * MAC: <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
+
+### User defined key binding
+
+If you create a key binding for the command `templates.newFileFromTemplate` you can pass an `args` property.
+
+If the `args` object contains a property `templateName`, the first item from the quickpick list with the same name is choosen.
+
+You can use the same key combo to select different templates for different workspaces by using:  
+`"resourceDirname =~ /^\\/users\\/mememe\\/projectAAA/"`  
+in the `when` property. We need to use `\\/` because we escape the `/` in the regex and inside JSON we escape the `\`.
+
+```json
+  {
+    "key": "alt+m",
+    "command": "templates.newFileFromTemplate",
+    "args": { "templateName": "myCustomizedTemplate.html" }
+  }
+```
 
 # Save As N Times
 
@@ -552,7 +572,7 @@ The other properties are:
     * <code>size=<em>number</em></code> : if `size` is defined, the number is padded with `0`'s on the left to get a string of the given size (default: undefined)
     * <code>base=<em>number</em></code> : the base of the number of this field, allows you to generate numbers with base, 2, 8, 16. Possible values [2, 36] (default: 10)
 
-    If `from >= to` no files will be created.
+    If `from > to` no files will be created.
 
     Using negative values for `from` and `to` give unexpected results, the `-` sign is not the start character of the resulting string of the field.
 

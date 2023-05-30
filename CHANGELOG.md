@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.14.0] 2023-05-30
+### Added
+- `templates.newFileFromTemplate` : in key binding `args` property `templateName` to select a template.
+
 ## [1.13.0] 2023-04-19
 ### Added
 - variable `${command}` with optional arguments

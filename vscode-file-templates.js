@@ -693,7 +693,13 @@ async function getCurrentPath_TemplateDirFolder(uri, templateDirs) {
   // TODO : create untitled file from template
 }
 
-async function newFileFromTemplate(uri) {
+async function newFileFromTemplate(args_uri) {
+  let uri = undefined;
+  let args = args_uri;
+  if (args_uri && getProperty(args_uri, 'scheme')) {
+    uri = args_uri;
+    args = undefined;
+  }
   gCurrentDate = new Date();
   withTemplateDirs(async (templateDirs) => {
     let {currentPath, templateDirFolder} = await getCurrentPath_TemplateDirFolder(uri, templateDirs);
@@ -703,6 +709,16 @@ async function newFileFromTemplate(uri) {
     let override = true;
     getTemplates(templateDirs, override)
       .then(templatesInfo => {
+        if (args) {
+          let templateName = getProperty(args, 'templateName');
+          if (templateName) {
+            for (const templateInfo of templatesInfo) {
+              if (templateInfo.label === templateName) {
+                return templateInfo;
+              }
+            }
+          }
+        }
         templatesInfo.unshift( { label: NEW_FILE } );
         return vscode.window.showQuickPick(templatesInfo, { placeHolder: 'Select a template to create from' });
       })
