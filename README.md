@@ -131,7 +131,7 @@ A directory is only created when you store a new template in that directory.
 
 ## Construct Template Filename
 
-You can construct the filename to use with a **special formatted first line** of the template. The format is
+You can construct the filename to use with **special formatted first line(s)** of the template. The format is
 
 <code>##@@## <em>filePathNoExtension</em></code>
 
@@ -537,7 +537,14 @@ The extension defines a few key bindings:
 
 If you create a key binding for the command `templates.newFileFromTemplate` you can pass an `args` property.
 
-If the `args` object contains a property `templateName`, the first item from the quickpick list with the same name is choosen.
+The `args` object can contain the properties:
+
+* `templateName` : (Optional) [`string`] the first item from the quickpick list with the same name is choosen.
+* `fileExists` : (Optional) [`string`] the action if file already exists. (default: `error`)  
+  possible values:
+  * `open` : open the file
+  * `error` : show error message
+  * `silent` : do nothing
 
 You can use the same key combo to select different templates for different workspaces by using:  
 `"resourceDirname =~ /^\\/users\\/mememe\\/projectAAA/"`  
@@ -547,7 +554,10 @@ in the `when` property. We need to use `\\/` because we escape the `/` in the re
   {
     "key": "alt+m",
     "command": "templates.newFileFromTemplate",
-    "args": { "templateName": "myCustomizedTemplate.html" }
+    "args": {
+      "templateName": "myCustomizedTemplate.html",
+      "fileExists": "silent"
+    }
   }
 ```
 

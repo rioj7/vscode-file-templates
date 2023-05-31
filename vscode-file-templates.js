@@ -5,6 +5,7 @@ const fs = require('fs');
 const extensionTemplatesPath = path.join(__dirname, 'templates');
 
 const getProperty = (obj, prop, deflt) => { return obj.hasOwnProperty(prop) ? obj[prop] : deflt; };
+function dblQuest(value, deflt) { return value !== undefined ? value : deflt; }
 
 const workspaceFolder2TemplateDirFolder = wsf => ({ label: `  $(folder) Folder: ${wsf.name}`, uri: vscode.Uri.file(path.join(wsf.uri.fsPath, '.vscode', 'templates')) });
 const templateDirFolder2WorkspacePath = tdf => path.dirname(path.dirname(tdf.uri.fsPath));  // remove '/.vscode/templates' OS independent
@@ -500,7 +501,8 @@ async function asyncVariable(text, func, funcProperties, abortOnUndefined) {
   return text;
 };
 
-function createFile(filepath, workspacePath = undefined, data = '', fileExtname = '') {
+function createFile(args, filepath, workspacePath = undefined, data = '', fileExtname = '') {
+  args = dblQuest(args, {});
   new Promise(async (resolve, reject) => {
     let filenamePrefix = '##@@##';
     let fileBasenameNoExtension = undefined;
@@ -567,12 +569,18 @@ function createFile(filepath, workspacePath = undefined, data = '', fileExtname 
     .then(async fileBasenameNoExtension => {
       if (!fileBasenameNoExtension) { return; }
       let [fileBasename, newFilePath] = get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExtname);
+      let newFileURI = vscode.Uri.file(newFilePath);
       if (pathIsFile(newFilePath)) {
-        vscode.window.showErrorMessage(`File already exists: ${newFilePath}`);
+        let action = getProperty(args, 'fileExists', 'error'); // or 'open' or 'silent'
+        if (action === 'open') {
+          return vscode.commands.executeCommand('vscode.open', newFileURI);
+        }
+        if (action === 'error') {
+          vscode.window.showErrorMessage(`File already exists: ${newFilePath}`);
+        }
         return;
       }
       data = await variableSubstitution(data, newFilePath, fileBasename, fileExtname)
-      let newFileURI = vscode.Uri.file(newFilePath);
 
       let offsetCursor = -1;
       if (!getVariableWithParamsRegex('(?:input|snippet)').test(data)) {
@@ -730,7 +738,7 @@ async function newFileFromTemplate(args_uri) {
             if (currentPath === undefined) {
               vscode.commands.executeCommand('workbench.action.files.newUntitledFile');
             } else {
-              createFile(currentPath);
+              createFile(args, currentPath);
             }
           }
           return;
@@ -742,7 +750,7 @@ async function newFileFromTemplate(args_uri) {
             return;
           }
           let extension = templateInfo.filePath.substring(templateInfo.filePath.lastIndexOf('.'));
-          createFile(currentPath, workspacePath, data, extension);
+          createFile(args, currentPath, workspacePath, data, extension);
         });
       });
   });

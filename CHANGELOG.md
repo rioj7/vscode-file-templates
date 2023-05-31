@@ -1,8 +1,9 @@
 # Change Log
 
-## [1.14.0] 2023-05-30
+## [1.14.1] 2023-05-31
 ### Added
 - `templates.newFileFromTemplate` : in key binding `args` property `templateName` to select a template.
+- `templates.newFileFromTemplate` : in key binding `args` property `fileExists` to set action if file already exists (`error`, `silent`, `open`)
 
 ## [1.13.0] 2023-04-19
 ### Added
