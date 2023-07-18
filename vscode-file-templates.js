@@ -418,6 +418,7 @@ function substDirectoryPart(data, dirname, variableName) {
     return 'Unknown';
   });
 }
+
 /** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {Promise<string>} */
 async function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
   let newFileURI = vscode.Uri.file(newFilePath); // file can be outside a workspace
@@ -666,6 +667,7 @@ async function pasteTemplate(args) {
   }
   let data = await variableSubstitution(template, fsPath, fileBasename, fileExtname);
   editor.edit(editBuilder => { editor.selections.forEach(s => { editBuilder.replace(s, data); }); });
+  gCurrentDate = undefined;
 }
 
 var getWorkspaceFolder = async (folders) => {
@@ -708,7 +710,6 @@ async function newFileFromTemplate(args_uri) {
     uri = args_uri;
     args = undefined;
   }
-  gCurrentDate = new Date();
   withTemplateDirs(async (templateDirs) => {
     let {currentPath, templateDirFolder} = await getCurrentPath_TemplateDirFolder(uri, templateDirs);
     templateDirs.extension = { label: '  $(extensions) Extension', uri: vscode.Uri.file(extensionTemplatesPath) };
@@ -733,6 +734,8 @@ async function newFileFromTemplate(args_uri) {
       .then(templateInfo => {
         if (!templateInfo) { return; }
 
+        gCurrentDate = new Date();
+
         if (!templateInfo.filePath) {
           if (templateInfo.label === NEW_FILE) {
             if (currentPath === undefined) {
@@ -752,6 +755,8 @@ async function newFileFromTemplate(args_uri) {
           let extension = templateInfo.filePath.substring(templateInfo.filePath.lastIndexOf('.'));
           createFile(args, currentPath, workspacePath, data, extension);
         });
+
+        gCurrentDate = undefined;
       });
   });
 }
