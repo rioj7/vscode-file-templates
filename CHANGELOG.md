@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.15.0] 2023-07-17
+### Added
+- Save As N Times : possibility to have variables in the file, <code>&dollar;{field[<em>number</em>]}</code> _number_ is positive or negative.
+
 ## [1.14.1] 2023-05-31
 ### Added
 - `templates.newFileFromTemplate` : in key binding `args` property `templateName` to select a template.

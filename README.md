@@ -1,7 +1,7 @@
 The extension supports:
 
 * [Create files from defined templates](#file-templates)
-* [Save As current file N times](#save-as-n-times)
+* current file [Save As N times](#save-as-n-times)
 
 # File Templates
 
@@ -246,12 +246,15 @@ A number of variables is identical to the [variables that can be used in `tasks.
 
 * `${relativeFile}` : (**Transform**) the current opened file relative to workspaceFolder
 * `${relativeFileDirname}` : (**Transform**) the current opened file's dirname relative to workspaceFolder
-* <code>&dollar;{relativeFileDirnameSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
-* <code>&dollar;{workspaceFolderSplit[<em>number</em>]}</code> - _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
+* <code>&dollar;{relativeFileDirnameSplit[<em>number</em>]}</code> : _number_ can be `-1...-9`, get part _number_ of the `relativeFileDirname` relative to the end, `-1` is the last part
+* <code>&dollar;{workspaceFolderSplit[<em>number</em>]}</code> : _number_ can be `-1...-9`, get part _number_ of the `workspaceFolder` relative to the end, `-1` is the last part
 * `${fileBasename}` : (**Transform**) the current opened file's basename
 * `${fileBasenameNoExtension}` : (**Transform**) the current opened file's basename with no file extension
 * `${fileExtname}` : (**Transform**) the current opened file's extension
 * <code>&dollar;{command##command=<em>commandID</em>##args=<em>JSON_object</em>##}</code> : The result of calling the command with the _`commandID`_ and the given (optional) `args` JSON object. The `args` property is passed as is to the command. No variables in the strings are evaluated. The command must know how to handle them. ([example](#variable-command))
+* <code>&dollar;{field[<em>number</em>]}</code> : variable is valid in the command [Save As N times](#save-as-n-times) (`templates.fileSaveAsNTimes`), in the file name template we have 1 or more fields. _number_ is the index in the array of fields, _number_ can be positive or negative:  
+  * positive numbers start counting from the left, `0` is the first field
+  * negative numbers start counting from the right, `-1` is the last field
 
 The next variables use settings:
 
@@ -567,7 +570,7 @@ If you need a series of files with filenames that have a sequence numbering and 
 
 The command asks to enter a file name template with fields. A field is a series of properties enclosed by `{{ }}`. The properties are comma separated _`key=value`_ pairs. The type of the field is determined by the property _`type`_. Based on the current file name a suggestion is shown in the input box with 1 field added just before the file extension.
 
-A file name template can have 1 or multiple fields. If no field is found a message is shown and no new file is created.
+A file name template has 1 or multiple fields. If no field is found a message is shown and no new file is created.
 
 At the moment only a numeric field (`type=N`) is possible.
 
@@ -586,7 +589,9 @@ The other properties are:
 
     Using negative values for `from` and `to` give unexpected results, the `-` sign is not the start character of the resulting string of the field.
 
-The file copies are saved in the same folder as the current file. No file will be overwritten. If the files need to be replaced you have to delete them first.
+The file content can have [variables](#template-variables). Use the <code>&dollar;{field[<em>number</em>]}</code> variable to get the result of the file name template fields. The `${input}` and `${snippet}` variables need an editor, they can be resolved when you open the file and use the command **Files: Next Snippet in File**.
+
+The files are saved in the same folder as the current file. No file will be overwritten. If the files need to be replaced you have to delete them first.
 
 ## Example with multiple fields
 

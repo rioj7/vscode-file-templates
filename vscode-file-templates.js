@@ -420,7 +420,7 @@ function substDirectoryPart(data, dirname, variableName) {
 }
 
 /** @param {string} data @param {string} newFilePath  @param {string} fileBasename  @param {string} fileExtname  @returns {Promise<string>} */
-async function variableSubstitution(data, newFilePath, fileBasename, fileExtname) {
+async function variableSubstitution(data, newFilePath, fileBasename, fileExtname, fields) {
   let newFileURI = vscode.Uri.file(newFilePath); // file can be outside a workspace
   let workspaceFolder = vscode.workspace.getWorkspaceFolder(newFileURI);
   let workspaceURI = workspaceFolder ? workspaceFolder.uri : undefined;
@@ -459,6 +459,16 @@ async function variableSubstitution(data, newFilePath, fileBasename, fileExtname
 
   data = substDirectoryPart(data, relativeFileDirname, 'relativeFileDirnameSplit');
   data = substDirectoryPart(data, workspaceURI ? workspaceURI.path : '', 'workspaceFolderSplit');
+
+  fields = dblQuest(fields, []);
+  data = data.replace(new RegExp(`\\$\\{field\\[(-?\\d)\\]\\}`, 'g'), (m, p1) => {
+    let idx = Number(p1);
+    if (idx < 0) { idx += fields.length - 1; }  // last field is "" (empty string)
+    if (idx >= 0 && idx < fields.length) {
+      return fields[idx];
+    }
+    return 'Unknown';
+  });
 
   // to allow variables in the result template we have to fix the "$\{...}" texts
   data = data.replace(/\$\\\{/g, '${');
@@ -816,6 +826,8 @@ class SaveAsIterateProperties {
     this.fileNameParts = [];
     this.fieldTemplates = [];
     this.fieldResults = [];
+    this.fileDir = "";
+    this.fileExtname = "";
   }
 }
 
@@ -869,10 +881,18 @@ class SaveTemplate extends BaseFieldTemplate {
   /** @param {SaveAsIterateProperties} saveAsProperties */
   async _iterate(saveAsProperties) {
     // both arrays are now same length, last fieldResults === ''
-    let destFilePath = flattened(zip(saveAsProperties.fileNameParts, saveAsProperties.fieldResults)).join('');
+    let fileBasename = flattened(zip(saveAsProperties.fileNameParts, saveAsProperties.fieldResults)).join('');
+    let destFilePath = saveAsProperties.fileDir + fileBasename;
     if (destFilePath === this.srcFilePath) { return; }
-    // console.log(`Copy file to: ${destFilePath}`);
-    await vscode.workspace.fs.copy(vscode.Uri.file(this.srcFilePath), vscode.Uri.file(destFilePath), {overwrite:false});
+    let data = Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.file(this.srcFilePath))).toString();
+    data = await variableSubstitution(data, saveAsProperties.fileDir, fileBasename, saveAsProperties.fileExtname, saveAsProperties.fieldResults);
+    try {
+      // if we can't read the file we get an exception
+      await vscode.workspace.fs.readFile(vscode.Uri.file(destFilePath));
+    } catch (error) {
+      // console.log(`Write to file: ${destFilePath}`);
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(destFilePath), Buffer.from(data));
+    }
   }
 }
 
@@ -919,15 +939,20 @@ async function fileSaveAsNTimes(editor, edit, args) {
   fileNameParts.push(fileNameWithTemplates.substring(lastIndex));
   fieldTemplates.push(new SaveTemplate(fieldTemplates.length, editor.document.uri.fsPath));
 
-  fileNameParts[0] = fileDir + fileNameParts[0];
   if (fieldTemplates.length === 0) {
     vscode.window.showInformationMessage('No field specified.');
     return;
   }
+  gCurrentDate = new Date();
+
   let saveAsProperties = new SaveAsIterateProperties();
   saveAsProperties.fileNameParts = fileNameParts;
   saveAsProperties.fieldTemplates = fieldTemplates;
+  saveAsProperties.fileDir = fileDir;
+  saveAsProperties.fileExtname = fileName.substring(lastDot);
   await fieldTemplates[0].iterate(saveAsProperties);
+
+  gCurrentDate = undefined;
 }
 
 function activate(context) {
