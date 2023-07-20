@@ -766,7 +766,7 @@ async function newFileFromTemplate(args_uri) {
           createFile(args, currentPath, workspacePath, data, extension);
         });
 
-        gCurrentDate = undefined;
+        // gCurrentDate = undefined;  // don't reset because template write happens aync/callback
       });
   });
 }
