@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.16.0] 2023-10-19
+### Added
+- `${for-snippet}` variable : possibility to iterate a snippet over a glob pattern file list
+
 ## [1.15.0] 2023-07-17
 ### Added
 - Save As N Times : possibility to have variables in the file, <code>&dollar;{field[<em>number</em>]}</code> _number_ is positive or negative.

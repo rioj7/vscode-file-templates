@@ -19,6 +19,7 @@ const nonPosixPathRegEx = new RegExp('^/([a-zA-Z]):/');
 const lowerCaseDriveLetter = p => p.replace(nonPosixPathRegEx, match => match.toLowerCase() );
 
 let gCurrentDate = undefined;  // use the same Date() for all variables in the template
+let gForSnippet = undefined;
 
 function withTemplateDirs(action) {
   let configScope = vscode.workspace.workspaceFolders === undefined ? undefined : vscode.workspace.workspaceFolders[0].uri;
@@ -319,6 +320,40 @@ class SnippetVariableProperties extends VariableProperties {
   }
 }
 
+class ForSnippetVariableProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.snippet = '';
+    this.hasUI = true;
+    this.files = undefined;
+    this.exclude = undefined;
+    this.filesTodo = [];
+    this.newline = false;
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) {
+    let propIndex = 1; // skip snippet
+    this.snippet = properties[0];
+    return propIndex;
+  }
+  setProperty(key, value) {
+    if (key === 'noUI') { this.hasUI = false; return; }
+    if (key === 'newline') { this.newline = true; return; }
+    if (key === 'files') { this.files = value; return; }
+    if (key === 'exclude') {
+      this.exclude = value;
+      if (value === 'undefined') {
+        this.exclude = undefined;
+      }
+      if (value === 'null') {
+        this.exclude = null;
+      }
+      return;
+    }
+  }
+}
+
 class CommandVariableProperties extends VariableProperties {
   constructor(regexMatch) {
     super(regexMatch);
@@ -382,6 +417,39 @@ async function handleSnippetNoUI(editor) {
     await editor.insertSnippet(new vscode.SnippetString(snippetVar.snippet), varRange);
     return true;
   }
+  let forSnippetVarRegEx = getVariableWithParamsRegex('for-snippet', 'g');
+  while ((result = forSnippetVarRegEx.exec(documentText)) !== null) {
+    let forSnippetVar = new ForSnippetVariableProperties(result);
+    if (forSnippetVar.hasUI) { continue; }
+    if (gForSnippet === undefined) {
+      gForSnippet = forSnippetVar;
+      let uris = await vscode.workspace.findFiles(gForSnippet.files, gForSnippet.exclude);
+      gForSnippet.filesTodo = uris.map(u => u.path);
+      gForSnippet.filesTodo.sort();
+    }
+    if (gForSnippet.filesTodo.length === 0) {
+      await editor.edit(editBuilder => editBuilder.delete(new vscode.Range(document.positionAt(result.index), document.positionAt(forSnippetVarRegEx.lastIndex))));
+      gForSnippet = undefined;
+      return true; // try again with a new documentText
+    }
+    let filepath = gForSnippet.filesTodo.shift();
+    let [fileBasename, fileExtname] = get_fileBasename_fileExtname(filepath);
+    let clipboardText = await variableSubstitution('${relativeFile}', filepath, fileBasename, fileExtname);
+    await vscode.env.clipboard.writeText(clipboardText);
+    let snippetText = await variableSubstitution(gForSnippet.snippet, filepath, fileBasename, fileExtname);
+    if (gForSnippet.newline && gForSnippet.filesTodo.length > 0) {
+      snippetText += '\n';
+      // let posVar = document.positionAt(result.index);
+      // let whitespace = document.lineAt(posVar.line).text.substring(0, posVar.character);
+      // if (new RegExp('^[ \t]+$').test(whitespace)) {
+      //   snippetText += whitespace;
+      // }
+    }
+    let start = document.positionAt(result.index);
+    let varStart = new vscode.Range(start, start);
+    await editor.insertSnippet(new vscode.SnippetString(snippetText), varStart);
+    return true; // try again with a new documentText
+  }
   return false;
 }
 
@@ -397,6 +465,20 @@ function get_fileBasename_NewFilePath(filepath, fileBasenameNoExtension, fileExt
 
   let newFilePath = path.join(curDir, fileBasename);
   return [fileBasename, newFilePath];
+}
+
+/** @param {string} filepath */
+function get_fileBasename_fileExtname(filepath) {
+  let fileBasename = filepath;
+  let fileExtname = '';
+  let slashIdx = filepath.lastIndexOf('/');
+  if (slashIdx === -1) { return [fileBasename, fileExtname]; }
+  fileBasename = filepath.substring(slashIdx+1);
+  let dotIdx = fileBasename.lastIndexOf('.');
+  if (dotIdx !== -1) {
+    fileExtname = fileBasename.substring(dotIdx);
+  }
+  return [fileBasename, fileExtname];
 }
 
 function transformVariable(data, variableValue, variableName) {

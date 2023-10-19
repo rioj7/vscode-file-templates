@@ -299,6 +299,16 @@ If the _description_ starts with `name=` that `${input}` variable is considered 
 * <code>&dollar;{snippet:<em>definition</em>:}</code> : you can use the full syntax of the [Visual Studio Code snippets](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_snippet-syntax).<br/>A snippet is evaluated after the file is created with the command: **Next Snippet in File** from the Context Menu or Command Palette. The editor needs to be put in _Snippet_ mode. Apply this command for every `${snippet}` or `${cursor}` variable still in the file.<br/>
   Example: `${snippet##${1|*,**,***|} ${TM_FILENAME/(.*)/${1:/upcase}/} ${1}##}`
 * <code>&dollar;{snippet:<em>definition</em>:noUI:}</code> : Adding the property `noUI` should only be added to `${snippet}` variables that do not need User Interaction (variable transforms). These snippets are resolved at file creation.
+* <code>&dollar;{for-snippet:<em>definition</em>:<em>properties</em>:noUI:}</code> : Loop over a collection of files in the workspace and insert a snippet for each file. At the moment only `noUI` snippets are supported in a for loop. This variable is resolved at file creation. ([example](#variable-for-snippet))  
+  Allowed properties are:
+  * _definition_ : is the snippet definition used. Must be the first property. It can contain variables.  
+    * <code>&dollar;{<em>name</em>}</code> : these variables (with or without properties) relate to the file you are creating.
+    * <code>&dollar;\\{<em>name</em>}</code> : these variables (with or without properties) relate to the file iterated by the for loop.  
+    The variable <code>&dollar;\\{CLIPBOARD}</code> (a standard snippet variable) contains the value of the <code>&dollar;{relativeFile}</code> variable but it allows you to transform the content like other snippet variables
+  * <code>files=<em>glob</em></code> : using [`vscode.workspace.findfiles`](https://code.visualstudio.com/api/references/vscode-api#workspace.findFiles) this is the `include` glob pattern. You can use variables to construct the glob pattern.
+  * <code>exclude=<em>glob</em></code> : (optional) using [`vscode.workspace.findfiles`](https://code.visualstudio.com/api/references/vscode-api#workspace.findFiles) this is the `exclude` glob pattern. You can use variables to construct the glob pattern. See the doc for the special values `undefined` and `null`.
+  * `newline` : (optional) do we have to add a newline character after each snippet.
+  * `noUI` : only No User Interaction snippets are allowed
 
 For template instantiation the `${input}` variables are processed at file creation. If you have some file with `${input}` variables they are also processed with the **Next Snippet in File** command. This can happen if you escape an `${input}` variable. This way you can later process them.
 
@@ -511,6 +521,50 @@ The result could be:
 ```
 
 The `json` property of the `extension.commandvariable.file.content` is a JavaScript expression. You could perform a number calculation or string manipulation (concatenation, split, join, map, ...) with the values extracted from the JSON file.
+
+## Variable for-snippet
+
+If you want to add a number of existing files to the template you can use the <code>&dollar;{for-snippet:<em>definition</em>:<em>properties</em>:}</code> variable.
+
+If you have the following dart project structure:
+
+```none
+Project
+├── ...
+└── lib/
+     ├── routes
+     ├── services
+     ├── ...
+     ├── ui/
+     │   ├── pages/
+     │   │   ├── page_1.dart
+     │   │   ├── page_2.dart
+     │   │   ├── ...
+     │   │   └── pages.dart
+     │   └── ...
+     ├── ...
+     └── main.dart
+```
+
+and you want to create the file `page.dart` that contains exports to the files in the `ui/pages` folder to make import easier you can use the the following variable in the template or a key binding:
+
+```none
+${for-snippet##export 'package:<project>$\{CLIPBOARD/.*?(\/ui\/.*)$/$1/}';##
+  files=${relativeFileDirname}/*.dart##
+  exclude=${relativeFile}##
+  noUI##
+  newline##}
+```
+
+Be aware to escape the directory separator `/` inside a regular expression, because `/` is also the regular expression separator.
+
+The result of the <code>&dollar;{for-snippet}</code> variable is:
+
+```dart
+export 'package:<project>/ui/pages/page_1.dart';
+export 'package:<project>/ui/pages/page_2.dart';
+export 'package:<project>/ui/pages/page_3.dart';
+```
 
 ## Extension Settings
 
