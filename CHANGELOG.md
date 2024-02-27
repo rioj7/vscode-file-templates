@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.17.0] 2024-02-27
+### Added
+- `${expression}` variable : perform a calculation with field numbers in **Save As N Times**
+
 ## [1.16.0] 2023-10-19
 ### Added
 - `${for-snippet}` variable : possibility to iterate a snippet over a glob pattern file list

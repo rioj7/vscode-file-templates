@@ -6,6 +6,7 @@ const extensionTemplatesPath = path.join(__dirname, 'templates');
 
 const getProperty = (obj, prop, deflt) => { return obj.hasOwnProperty(prop) ? obj[prop] : deflt; };
 function dblQuest(value, deflt) { return value !== undefined ? value : deflt; }
+function isString(obj) { return typeof obj === 'string';}
 
 const workspaceFolder2TemplateDirFolder = wsf => ({ label: `  $(folder) Folder: ${wsf.name}`, uri: vscode.Uri.file(path.join(wsf.uri.fsPath, '.vscode', 'templates')) });
 const templateDirFolder2WorkspacePath = tdf => path.dirname(path.dirname(tdf.uri.fsPath));  // remove '/.vscode/templates' OS independent
@@ -17,6 +18,17 @@ function createDirectory(path) { if (!pathExists(path)) { fs.mkdirSync(path, { r
 function removeThemeIcon(text) { return text.replace(/\$\([-\w]+\)/g, ''); }
 const nonPosixPathRegEx = new RegExp('^/([a-zA-Z]):/');
 const lowerCaseDriveLetter = p => p.replace(nonPosixPathRegEx, match => match.toLowerCase() );
+
+function getExpressionFunction(expr, commandID) {
+  try {
+    return Function(`"use strict";return (function calcexpr(content, contentExt) {
+      return ${expr};
+    })`)();
+  }
+  catch (ex) {
+    vscode.window.showErrorMessage(`${commandID}: Incomplete expression`);
+  }
+}
 
 let gCurrentDate = undefined;  // use the same Date() for all variables in the template
 let gForSnippet = undefined;
@@ -377,6 +389,28 @@ class CommandVariableProperties extends VariableProperties {
   }
 }
 
+class ExpressionVariableProperties extends VariableProperties {
+  constructor(regexMatch) {
+    super(regexMatch);
+    this.expression = 'field[0]';
+    this.size = undefined;
+    this.padding = undefined;
+    this.base = 10;
+    this.uppercase = undefined;
+    this.init();
+  }
+  /** @param {string[]} properties @returns {number} */
+  getPropIndex(properties) { return 0; }
+  setProperty(key, value) {
+    if (key === 'uppercase') { this.uppercase = true; return; }
+    if (value === undefined) { return; }
+    if (key === 'expr') { this.expression = value; return; }
+    if (key === 'size') { this.size = Number(value); return; }
+    if (key === 'padding') { this.padding = value; return; }
+    if (key === 'base') { this.base = Number(value); return; }
+  }
+}
+
 /** @param {vscode.TextEditor} editor @param {RegExpMatchArray} regexMatch */
 async function processInputVariable(editor, regexMatch) {
   let inputVars = [ new InputVariableProperties(regexMatch) ];
@@ -543,13 +577,35 @@ async function variableSubstitution(data, newFilePath, fileBasename, fileExtname
   data = substDirectoryPart(data, workspaceURI ? workspaceURI.path : '', 'workspaceFolderSplit');
 
   fields = dblQuest(fields, []);
-  data = data.replace(new RegExp(`\\$\\{field\\[(-?\\d)\\]\\}`, 'g'), (m, p1) => {
+  let covertFieldIdx = p1 => {
     let idx = Number(p1);
     if (idx < 0) { idx += fields.length - 1; }  // last field is "" (empty string)
-    if (idx >= 0 && idx < fields.length) {
-      return fields[idx];
+    return (idx >= 0 && idx < fields.length) ? idx : -1;
+  };
+  let replaceFieldRefs = (txt, regexStr, asString) => {
+    return txt.replace(new RegExp(regexStr, 'g'), (m, p1) => {
+      let idx = covertFieldIdx(p1);
+      let str = (idx >= 0) ? fields[idx] : 'Unknown';
+      return asString ? `'${str}'` : str;
+    });
+  };
+  data = replaceFieldRefs(data, `\\$\\{field\\[(-?\\d)\\]\\}`);
+
+  data = data.replace(getVariableWithParamsRegex('expression', 'g'), (...regexMatch) => {
+    let props = new ExpressionVariableProperties(regexMatch);
+    let result = getExpressionFunction(replaceFieldRefs(props.expression, `field\\[(-?\\d)\\]`, true), 'expression')();
+    let str = result;
+    if (!isString(result)) {
+      str = result.toString(props.base);
+      if (props.uppercase) {
+        str = str.toUpperCase();
+      }
     }
-    return 'Unknown';
+    if (props.size) {
+      let padding = (props.padding !== undefined) ? props.padding : (isString(result) ? ' ' : '0');
+      str = str.padStart(props.size, padding);
+    }
+    return str;
   });
 
   // to allow variables in the result template we have to fix the "$\{...}" texts

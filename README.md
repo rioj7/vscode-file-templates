@@ -255,6 +255,18 @@ A number of variables is identical to the [variables that can be used in `tasks.
 * <code>&dollar;{field[<em>number</em>]}</code> : variable is valid in the command [Save As N times](#save-as-n-times) (`templates.fileSaveAsNTimes`), in the file name template we have 1 or more fields. _number_ is the index in the array of fields, _number_ can be positive or negative:  
   * positive numbers start counting from the left, `0` is the first field
   * negative numbers start counting from the right, `-1` is the last field
+* <code>&dollar;{expression##expr=<em>JS_expr</em>##size=<em>number</em>##padding=<em>string</em>##base=<em>number</em>##}</code> : If you want to perform a calcualtion and/or base conversion with a field number you describe the JavaScript expression in the `expr` property.  
+  The `size`, `padding`, `base` and `uppercase` properties control the display of the expression result.  
+  The following properties are defined:  
+  * <code>expr=<em>JS_expression</em></code> : A JavaScript expression that has number or sting result.  
+  The expression can contain field references of the form: <code>field[<em>number</em>]</code>  
+  For possible values of _number_ see <code>&dollar;{field[<em>number</em>]}</code>  
+  These references are replaced with the **string** of the field as used in the filename. You have to convert these strings before you can perform a calculation. Use [`Number.parseInt()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/parseInt) or [`Number()`](https://stackoverflow.com/q/51009465/9938317) with a prefix (if not in base 10).  
+  Example: <code>&dollar;{expression##expr=Number.parseInt(field[0], 16)+Number('0x'+field[1])##}</code>
+  * <code>size=<em>number</em></code> : (Optional) if `size` is defined, the result is padded with the `padding` string on the left to get a string of the given size (default: undefined)
+  * <code>padding=<em>string</em></code> : (Optional) which padding string to use if `size` is defined, (default: _space_ or `0`)
+  * <code>base=<em>number</em></code> : (Optional) if result is a number in which base/radix to show the number, allows you to generate numbers with base, 2, 8, 16. Possible values [2, 36] (default: 10)
+  * <code>uppercase</code> : (Optional) flag (no value) to use `A-Z` for base > 10
 
 The next variables use settings:
 
@@ -643,7 +655,8 @@ The other properties are:
 
     Using negative values for `from` and `to` give unexpected results, the `-` sign is not the start character of the resulting string of the field.
 
-The file content can have [variables](#template-variables). Use the <code>&dollar;{field[<em>number</em>]}</code> variable to get the result of the file name template fields. The `${input}` and `${snippet}` variables need an editor, they can be resolved when you open the file and use the command **Files: Next Snippet in File**.
+The file content can have [variables](#template-variables). Use the <code>&dollar;{field[<em>number</em>]}</code> variable to get the result of the file name template fields. Use the <code>&dollar;{expression##expr=<em>JS_expr</em>##}</code> variable if you want to perform a calculation with the <code>field[<em>number</em>]</code> string values.  
+The `${input}` and `${snippet}` variables need an editor, they can be resolved when you open the file and use the command **Files: Next Snippet in File**.
 
 The files are saved in the same folder as the current file. No file will be overwritten. If the files need to be replaced you have to delete them first.
 
