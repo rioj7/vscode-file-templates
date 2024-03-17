@@ -255,7 +255,7 @@ A number of variables is identical to the [variables that can be used in `tasks.
 * <code>&dollar;{field[<em>number</em>]}</code> : variable is valid in the command [Save As N times](#save-as-n-times) (`templates.fileSaveAsNTimes`), in the file name template we have 1 or more fields. _number_ is the index in the array of fields, _number_ can be positive or negative:  
   * positive numbers start counting from the left, `0` is the first field
   * negative numbers start counting from the right, `-1` is the last field
-* <code>&dollar;{expression##expr=<em>JS_expr</em>##size=<em>number</em>##padding=<em>string</em>##base=<em>number</em>##}</code> : If you want to perform a calcualtion and/or base conversion with a field number you describe the JavaScript expression in the `expr` property.  
+* <code>&dollar;{expression##expr=<em>JS_expr</em>##size=<em>number</em>##padding=<em>string</em>##base=<em>number</em>##}</code> : If you want to perform a calculation and/or base conversion with a field number you describe the JavaScript expression in the `expr` property.  
   The `size`, `padding`, `base` and `uppercase` properties control the display of the expression result.  
   The following properties are defined:  
   * <code>expr=<em>JS_expression</em></code> : A JavaScript expression that has number or sting result.  
