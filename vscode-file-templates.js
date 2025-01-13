@@ -814,7 +814,8 @@ async function pasteTemplate(args) {
     fileExtname = fileBasename.substring(pos);
   }
   let data = await variableSubstitution(template, fsPath, fileBasename, fileExtname);
-  editor.edit(editBuilder => { editor.selections.forEach(s => { editBuilder.replace(s, data); }); });
+  await editor.edit(editBuilder => { editor.selections.forEach(s => { editBuilder.replace(s, data); }); });
+  vscode.commands.executeCommand('templates.nextSnippet');
   gCurrentDate = undefined;
 }
 

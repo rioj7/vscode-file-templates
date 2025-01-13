@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.17.1] 2025-01-13
+### Added
+- `templates.pasteTemplate` : after paste resolve first `${snippet}`, `${input}`, `${cursor}` variable
+
 ## [1.17.0] 2024-02-27
 ### Added
 - `${expression}` variable : perform a calculation with field numbers in **Save As N Times**

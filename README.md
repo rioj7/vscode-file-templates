@@ -59,7 +59,7 @@ If you use snippet variables often it might be handy to define a key binding for
 
 ## Insert Template in current file
 
-The command `templates.pasteTemplate` allows to insert a template into the current editor. Every selection is replaced with the template. At the moment the variables `${input}`, `${snippet}` and `${cursor}` are not allowed (yet) in an insert template.
+The command `templates.pasteTemplate` allows to insert a template into the current editor. Every selection is replaced with the template. The first variable in the file, in the order `${snippet}`, `${input}`, or `${cursor}` is resolved. If you have more variables left in the inserted template you have to use **Next Snippet in File** command (possibly by keybinding).
 
 The argument of the command is an object with a parameter `text` that is an array of lines that make the template.
 
