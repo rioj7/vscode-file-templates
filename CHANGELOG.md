@@ -1,8 +1,10 @@
 # Change Log
 
-## [1.17.1] 2025-01-13
+## [1.17.2] 2025-01-24
 ### Added
 - `templates.pasteTemplate` : after paste resolve first `${snippet}`, `${input}`, `${cursor}` variable
+### Fixed
+- Save As N Times: full path of file used in variables
 
 ## [1.17.0] 2024-02-27
 ### Added

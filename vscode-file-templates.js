@@ -1024,7 +1024,7 @@ class SaveTemplate extends BaseFieldTemplate {
     let destFilePath = saveAsProperties.fileDir + fileBasename;
     if (destFilePath === this.srcFilePath) { return; }
     let data = Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.file(this.srcFilePath))).toString();
-    data = await variableSubstitution(data, saveAsProperties.fileDir, fileBasename, saveAsProperties.fileExtname, saveAsProperties.fieldResults);
+    data = await variableSubstitution(data, destFilePath, fileBasename, saveAsProperties.fileExtname, saveAsProperties.fieldResults);
     try {
       // if we can't read the file we get an exception
       await vscode.workspace.fs.readFile(vscode.Uri.file(destFilePath));
