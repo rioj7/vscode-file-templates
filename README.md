@@ -544,18 +544,18 @@ If you have the following dart project structure:
 Project
 ├── ...
 └── lib/
-     ├── routes
-     ├── services
-     ├── ...
-     ├── ui/
-     │   ├── pages/
-     │   │   ├── page_1.dart
-     │   │   ├── page_2.dart
-     │   │   ├── ...
-     │   │   └── pages.dart
-     │   └── ...
-     ├── ...
-     └── main.dart
+    ├── routes
+    ├── services
+    ├── ...
+    ├── ui/
+    │   ├── pages/
+    │   │   ├── page_1.dart
+    │   │   ├── page_2.dart
+    │   │   ├── ...
+    │   │   └── pages.dart
+    │   └── ...
+    ├── ...
+    └── main.dart
 ```
 
 and you want to create the file `page.dart` that contains exports to the files in the `ui/pages` folder to make import easier you can use the the following variable in the template or a key binding:
