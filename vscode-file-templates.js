@@ -669,7 +669,14 @@ function createFile(args, filepath, workspacePath = undefined, data = '', fileEx
         }
         fileBasenameNoExtension += newContent.substring(filenamePrefix.length+1).trim();
       }
+    }
 
+    let filePath_arg = getProperty(args, 'filePath');
+    if (filePath_arg) {
+      fileBasenameNoExtension = filePath_arg;
+    }
+
+    if (fileBasenameNoExtension) {
       // check if path is absolute: / or d:/ or ~/ or ~w/ or ~f/ and construct the "filepath"
       if (new RegExp('^~[wf]/').test(fileBasenameNoExtension)) {
         if (!workspacePath) {

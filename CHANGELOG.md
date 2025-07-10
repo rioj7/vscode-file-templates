@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.18.0] 2025-07-10
+### Added
+- `templates.newFileFromTemplate` : in command `args` property `filePath` to specify file location.
+
 ## [1.17.2] 2025-01-24
 ### Added
 - `templates.pasteTemplate` : after paste resolve first `${snippet}`, `${input}`, `${cursor}` variable

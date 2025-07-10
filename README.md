@@ -23,7 +23,7 @@ It fixes a number of problems and adds a few features.
 * Create new File Templates either from an existing file or a blank file.
 * Edit User defined Templates.
 * Use [variables](#template-variables) for Author Name, Date, File Path, User input, calling command results and Snippets.
-* [Construct the file name](#construct-template-filename) with variables on first line of template
+* [Construct Filename in Template](#construct-filename-in-template) with variables on first line of template
 * Insert a template with a key binding
 
 ## Known problems
@@ -129,7 +129,7 @@ Each location is more specific of where the template can be used. Templates with
 
 A directory is only created when you store a new template in that directory.
 
-## Construct Template Filename
+## Construct Filename in Template
 
 You can construct the filename to use with **special formatted first line(s)** of the template. The format is
 
@@ -602,12 +602,15 @@ The extension defines a few key bindings:
     * Windows:  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
     * MAC: <kbd>Cmd</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>
 
-### User defined key binding
+### User defined key binding or calling from other extension
 
 If you create a key binding for the command `templates.newFileFromTemplate` you can pass an `args` property.
 
 The `args` object can contain the properties:
 
+* `filePath` : (Optional) [`string`] the absolute/relative path of the new file.  
+  Can use the same content as [Construct Filename in Template](#construct-filename-in-template) string (not the prefix).  
+  It overrules the file path that might be specified with the prefix at the top of the template.
 * `templateName` : (Optional) [`string`] the first item from the quickpick list with the same name is choosen.
 * `fileExists` : (Optional) [`string`] the action if file already exists. (default: `error`)  
   possible values:
