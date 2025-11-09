@@ -38,7 +38,7 @@ function withTemplateDirs(action) {
   let config = vscode.workspace.getConfiguration('templates', configScope);
   let inspect = config.inspect('folder');
   if (inspect === undefined) { inspect = {key:undefined}; }
-  let templateDirs = { folders: [] };
+  let templateDirs = { folders: [], showExtensionTemplates: config.get('showExtensionTemplates') };
   if (inspect.globalValue) {
     templateDirs.global = { label: '  $(home) User', uri: vscode.Uri.file(inspect.globalValue) }
   }
@@ -868,7 +868,9 @@ async function newFileFromTemplate(args_uri) {
   }
   withTemplateDirs(async (templateDirs) => {
     let {currentPath, templateDirFolder} = await getCurrentPath_TemplateDirFolder(uri, templateDirs);
-    templateDirs.extension = { label: '  $(extensions) Extension', uri: vscode.Uri.file(extensionTemplatesPath) };
+    if (templateDirs.showExtensionTemplates) {
+      templateDirs.extension = { label: '  $(extensions) Extension', uri: vscode.Uri.file(extensionTemplatesPath) };
+    }
     templateDirs.folders = templateDirFolder ? [ templateDirFolder ] : [];
     let workspacePath = templateDirFolder ? templateDirFolder2WorkspacePath(templateDirFolder) : undefined;
     let override = true;

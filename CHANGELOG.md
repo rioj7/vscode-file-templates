@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.18.1] 2025-11-09
+### Added
+- setting `templates.showExtensionTemplates` : Show the extension supplied templates.
+
 ## [1.18.0] 2025-07-10
 ### Added
 - `templates.newFileFromTemplate` : in command `args` property `filePath` to specify file location.

@@ -586,7 +586,8 @@ This extension has the following settings that can be defined in [`settings.json
 * `templates.Author` : Set the Author name. **Deprecated**: Please use `templates.author` instead.
 * `templates.folder` : Define a File system path for a directory to save the templates at this level. Can only be defined at User and Multiroot Workspace level.
 * `templates.dateTimeFormat` : An object describing the properties used by the [`${dateTimeFormat}` variable](#variable-datetimeformat)
-* `templates.saveAfterInputVariableOnFileCreation` : Save the file after processing ${input} variables when the file is created.
+* `templates.saveAfterInputVariableOnFileCreation` : Save the file after processing ${input} variables when the file is created. (default: false)
+* `templates.showExtensionTemplates` : Show the extension supplied templates. (default: true)
 
 ## Key Bindings
 
