@@ -4,7 +4,7 @@
   "description": "Create files based on templates. Save As current file N Times.",
   "publisher": "rioj7",
   "license": "MIT",
-  "version": "1.18.1",
+  "version": "1.18.2",
   "engines": {"vscode": "^1.50.0"},
   "categories": ["Other"],
   "keywords": [ "templates", "template", "file", "snippets", "multi-root ready", "saveas" ],
@@ -40,8 +40,8 @@
         },
         "templates.folder": {
           "type": "string",
-          "description": "File path of folder with templates. For \"User\" and \"Multi Root Workspace\" (.code-workspace) settings. Not used for \"Folder\" (.vscode/settings.json) settings (.vscode/templates)",
-          "scope": "window"
+          "description": "File path of folder with templates. For \"User\", \"Multi Root Workspace\" (.code-workspace) and \"Folder\" (.vscode/settings.json) settings.",
+          "scope": "resource"
         },
         "templates.dateTimeFormat": {
           "type": "object",

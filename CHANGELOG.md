@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.18.2] 2025-11-16
+### Modified
+- `templates.folder` : Also allowed in Folder settings (.vscode/settings.json).
+### Fixed
+- `templates.folder` : Also works for MR Workspace (.code-workspace) with 1 folder.
+
 ## [1.18.1] 2025-11-09
 ### Added
 - setting `templates.showExtensionTemplates` : Show the extension supplied templates.

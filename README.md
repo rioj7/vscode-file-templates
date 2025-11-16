@@ -123,6 +123,7 @@ The templates can be stored in several locations:
 * **Extension** : The extension has a number of predefined templates that can not be edited or add to. After an update of the extension these edits would be gone.
 * **User** : in a user defined directory from the setting `templates.folder` in the User settings (a good location is `<homedir>/.vscode/templates`, the installed extensions are stored in a sibling directory) (Optional)
 * **Multiroot Workspace** : in a user defined directory from the setting `templates.folder` in the Workspace settings (`.code-workspace` file) (Optional)
+* **Workspace/Folder** : in a user defined directory from the setting `templates.folder` in the Folder settings (`.vscode/settings.json` file) (Optional)
 * **Workspace/Folder** : When a folder is open the templates are stored in the directory `.vscode/templates`
 
 Each location is more specific of where the template can be used. Templates with the same name override templates on a more generic level. When you need to select a template to create from it shows the location of the template and the more specific ones are listed first
@@ -584,7 +585,7 @@ This extension has the following settings that can be defined in [`settings.json
 
 * `templates.author` : Set the Author name.
 * `templates.Author` : Set the Author name. **Deprecated**: Please use `templates.author` instead.
-* `templates.folder` : Define a File system path for a directory to save the templates at this level. Can only be defined at User and Multiroot Workspace level.
+* `templates.folder` : Define a File system path for a directory to save the templates at this level. Can be defined at User, Multiroot Workspace and Folder level.
 * `templates.dateTimeFormat` : An object describing the properties used by the [`${dateTimeFormat}` variable](#variable-datetimeformat)
 * `templates.saveAfterInputVariableOnFileCreation` : Save the file after processing ${input} variables when the file is created. (default: false)
 * `templates.showExtensionTemplates` : Show the extension supplied templates. (default: true)

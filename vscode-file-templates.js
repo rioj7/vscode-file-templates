@@ -34,7 +34,16 @@ let gCurrentDate = undefined;  // use the same Date() for all variables in the t
 let gForSnippet = undefined;
 
 function withTemplateDirs(action) {
-  let configScope = vscode.workspace.workspaceFolders === undefined ? undefined : vscode.workspace.workspaceFolders[0].uri;
+  let configScope = undefined;
+  let editor = vscode.window.activeTextEditor;
+  if (editor) {
+    if (editor.document && editor.document.languageId) {
+      configScope = editor.document.uri;
+    }
+  }
+  if (configScope === undefined) {
+    configScope = vscode.workspace.workspaceFolders === undefined ? undefined : vscode.workspace.workspaceFolders[0].uri;
+  }
   let config = vscode.workspace.getConfiguration('templates', configScope);
   let inspect = config.inspect('folder');
   if (inspect === undefined) { inspect = {key:undefined}; }
@@ -47,8 +56,15 @@ function withTemplateDirs(action) {
     return;
   }
   if (vscode.workspace.workspaceFolders !== undefined) {
-    if ((vscode.workspace.workspaceFolders.length > 1) && inspect.workspaceValue) {
+    if (inspect.workspaceValue && (inspect.workspaceValue !== inspect.workspaceFolderValue)) {
       templateDirs.workspace = { label: `  $(list-tree) Workspace: ${vscode.workspace.name.replace(' (Workspace)', '')} `, uri: vscode.Uri.file(inspect.workspaceValue) }
+    }
+    if (inspect.workspaceFolderValue) {
+      let workspace = undefined;
+      if (configScope) {
+        workspace = vscode.workspace.getWorkspaceFolder(configScope);
+      }
+      templateDirs.workspaceFolder = { label: `  $(settings-gear) Setting Folder: ${workspace ? workspace.name : '??'}`, uri: vscode.Uri.file(inspect.workspaceFolderValue) }
     }
     templateDirs.folders = vscode.workspace.workspaceFolders.map( wsf => workspaceFolder2TemplateDirFolder(wsf) );
   }
@@ -71,9 +87,10 @@ function getTemplates(templateDirs, override = false) {
       });
     };
     let numFolders = templateDirs.folders.length;
-    updateTemplates(templateDirs.extension, 2 + numFolders);
-    updateTemplates(templateDirs.global, 1 + numFolders);
-    updateTemplates(templateDirs.workspace, 0 + numFolders);
+    updateTemplates(templateDirs.extension, 3 + numFolders);
+    updateTemplates(templateDirs.global, 2 + numFolders);
+    updateTemplates(templateDirs.workspace, 1 + numFolders);
+    updateTemplates(templateDirs.workspaceFolder, 0 + numFolders);
     templateDirs.folders.forEach( updateTemplates );
     templates.sort( (a,b) => {
       if ( a.sort[0] < b.sort[0]) return -1;
@@ -907,7 +924,7 @@ async function newFileFromTemplate(args_uri) {
 
         fs.readFile(templateInfo.filePath, 'utf8', (err, data) => {
           if (err) {
-            vscode.window.showErrorMessage('Cannot find the template');
+            vscode.window.showErrorMessage('Can not find the template');
             return;
           }
           let extension = templateInfo.filePath.substring(templateInfo.filePath.lastIndexOf('.'));
@@ -922,6 +939,7 @@ async function newFileFromTemplate(args_uri) {
 function createTemplate(templateText = '') {
   withTemplateDirs( templateDirs => {
     let folders = [...templateDirs.folders];
+    if (templateDirs.workspaceFolder) { folders.push(templateDirs.workspaceFolder); }
     if (templateDirs.workspace) { folders.push(templateDirs.workspace); }
     if (templateDirs.global)    { folders.push(templateDirs.global); }
     vscode.window.showQuickPick(folders, { placeHolder: 'Select a folder to place template' })
